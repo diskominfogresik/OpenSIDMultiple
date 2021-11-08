@@ -73,11 +73,13 @@
 			'autoWidth': false,
 			'pageLength': 10,
 			'order': [
-				[7, 'desc'],
+				[6, 'desc'],
+				[2, 'asc'],
+				[5, 'asc']
 			],
 			'columnDefs': [{
 				'orderable': false,
-				'targets': [0, 1, 10],
+				'targets': [0, 1, 6, 10],
 			}],
 			'ajax': {
 				'url': "<?= site_url('pembangunan') ?>",

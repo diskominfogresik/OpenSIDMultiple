@@ -148,12 +148,12 @@
 		return $data;
 	}
 
-	public function get_permohonan($where = [])
+	public function get_permohonan($id_permohonan)
 	{
 		$data = $this->db
-			->get_where('permohonan_surat', $where)
+			->where('id', $id_permohonan)
+			->get('permohonan_surat')
 			->row_array();
-
 		return $data;
 	}
 
@@ -166,29 +166,13 @@
 		return $this->db->get()->row_array();
 	}
 
-	public function proses($id, $status, $id_pemohon = '')
+	public function update_status($id, $data)
 	{
-		if ($status == 0)
-		{
-			// Belum Lengkap
-			$this->db->where('status', 1);
-		}
-		elseif ($status == 5)
-		{
-			// Batalkan hanya jika status = 0 (belum lengkap) atau 1 (sedang diproses)
-			$this->db->where_in('status', ['0', '1'])->where('id_pemohon', $id_pemohon);
-		}
-		else
-		{
-			// Lainnya
-			$this->db->where('status', ($status - 1));
-		}
+		$this->db->where('id', $id);
+		$outp = $this->db->update('permohonan_surat', $data);
 
-		$outp = $this->db
-			->where('id', $id)
-			->update('permohonan_surat', ['status' => $status, 'updated_at' => date('Y-m-d H:i:s')]);
-
-		status_sukses($outp);
+		if ($outp) $_SESSION['success'] = 1;
+		else $_SESSION['success'] = -1;
 	}
 
 	public function ambil_isi_form($isian_form)

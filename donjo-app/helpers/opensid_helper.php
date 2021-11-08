@@ -371,8 +371,9 @@ function AmbilVersi()
 function favico_desa()
 {
     $favico = 'favicon.ico';
-    $favico_desa = (is_file(APPPATH .'../'. LOKASI_LOGO_DESA . $favico)) ?
-        base_url() . LOKASI_LOGO_DESA . $favico :
+    $namaDesa=end(explode(DIRECTORY_SEPARATOR,$_SERVER['DOCUMENT_ROOT']));
+    $favico_desa = (is_file(APPPATH .'../'. 'sites-desa/'. $namaDesa . '/' . LOKASI_LOGO_DESA . $favico)) ?
+        base_url() . 'sites-desa/'. $namaDesa . '/' . LOKASI_LOGO_DESA . $favico :
         base_url() . $favico;
     return $favico_desa;
 }
@@ -387,8 +388,9 @@ function favico_desa()
  */
 function gambar_desa($nama_file, $type = false, $file = false)
 {
-    if (is_file(APPPATH .'../'. LOKASI_LOGO_DESA . $nama_file)) {
-        return $logo_desa = ($file ? APPPATH.'../' : base_url()) . LOKASI_LOGO_DESA . $nama_file;
+    $namaDesa=end(explode(DIRECTORY_SEPARATOR,$_SERVER['DOCUMENT_ROOT']));
+    if (is_file(APPPATH .'../'. 'sites-desa/'. $namaDesa . '/' . LOKASI_LOGO_DESA . $nama_file)) {
+        return $logo_desa = ($file ? APPPATH.'../' . 'sites-desa/'. $namaDesa . '/' : base_url()) . LOKASI_LOGO_DESA . $nama_file;
     }
 
     // type FALSE = logo, TRUE = kantor
@@ -694,7 +696,8 @@ function sql_in_list($list_array)
 function ambilBerkas($nama_berkas, $redirect_url, $unique_id = null, $lokasi = LOKASI_ARSIP)
 {
     // Tentukan path berkas (absolut)
-    $pathBerkas = FCPATH . $lokasi . $nama_berkas;
+    $namaDesa=end(explode(DIRECTORY_SEPARATOR,$_SERVER['DOCUMENT_ROOT']));
+    $pathBerkas = FCPATH . 'sites-desa/'.$namaDesa.'/'.$lokasi . $nama_berkas;
     $pathBerkas = str_replace('/', DIRECTORY_SEPARATOR, $pathBerkas);
     // Redirect ke halaman surat masuk jika path berkas kosong atau berkasnya tidak ada
     if (!file_exists($pathBerkas)) {

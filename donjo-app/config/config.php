@@ -234,7 +234,8 @@ $config['log_threshold'] = ENVIRONMENT === 'development' ? 1 : 1;
 | application/logs/ directory. Use a full server path with trailing slash.
 |
 */
-$config['log_path'] = FCPATH . 'logs/';
+$namaDesa=end(explode(DIRECTORY_SEPARATOR,$_SERVER['DOCUMENT_ROOT']));
+$config['log_path'] = FCPATH . 'sites-desa/'. $namaDesa . '/' . 'logs/';
 
 /*
 |--------------------------------------------------------------------------

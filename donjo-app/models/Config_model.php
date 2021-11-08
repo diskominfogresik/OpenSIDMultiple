@@ -1,5 +1,4 @@
 <?php
-
 /*
  * File ini:
  *
@@ -53,15 +52,8 @@ class Config_model extends CI_Model {
 	public function get_data()
 	{
 		$this->db->reset_query(); // TODO: cari query yg menggantung terkait pemanggilan first/dpt
-		$data = $this->db
-			->select('c.*, u.pamong_nip AS nip_kepala_desa')
-			->select('(case when p.nama is not null then p.nama else u.pamong_nama end) AS nama_kepala_desa')
-			->from('config c')
-			->join('tweb_desa_pamong u', 'c.pamong_id = u.pamong_id', 'left')
-			->join('tweb_penduduk p', 'u.id_pend = p.id', 'left')
-			->get()
-			->row_array();
-		return $data;
+		$query = $this->db->select('*')->limit(1)->get('config')->row_array();
+		return $query;
 	}
 
 	public function insert()
@@ -104,7 +96,8 @@ class Config_model extends CI_Model {
 		$data['nama_desa'] = nama_terbatas($post['nama_desa']);
 		$data['kode_desa'] = bilangan($post['kode_desa']);
 		$data['kode_pos'] = bilangan($post['kode_pos']);
-		$data['pamong_id'] = bilangan($post['pamong_id']);
+		$data['nama_kepala_desa'] = nama($post['nama_kepala_desa']);
+		$data['nip_kepala_desa'] = nomor_surat_keputusan($post['nip_kepala_desa']);
 		$data['alamat_kantor'] = alamat($post['alamat_kantor']);
 		$data['email_desa'] = email($post['email_desa']);
 		$data['telepon'] = bilangan($post['telepon']);
@@ -150,20 +143,14 @@ class Config_model extends CI_Model {
 		unset($data['old_logo']);
 		unset($data['file_kantor_desa']);
 		unset($data['old_kantor_desa']);
-		$this->db->where('id', $id)->update('config', $data);
+		$this->db->where('id',$id)->update('config', $data);
 
-		// Ubah jabatan pamong saat ditetapkan sebagai kepala desa
-		$kades = ucwords($this->setting->sebutan_kepala_desa . ' '. $this->setting->sebutan_desa);
+		$pamong['pamong_nama'] = $data['nama_kepala_desa'];
+		$pamong['pamong_nip'] = $data['nip_kepala_desa'];
+		$this->db->where('pamong_id','707');
+		$outp = $this->db->update('tweb_desa_pamong', $pamong);
 
-		$outp = $this->db
-			->where('pamong_id', $this->session->kades_lama)
-			->update('tweb_desa_pamong', ['jabatan' => NULL, 'pamong_status' => 0, 'pamong_ttd' => 0]);
-		$this->session->unset_userdata('kades_lama');
-
-		$outp = $this->db
-			->where('pamong_id', $data['pamong_id'])
-			->update('tweb_desa_pamong', ['jabatan' => $kades, 'urut' => 1, 'pamong_status' => 1, 'pamong_ttd' => 1]);
-		status_sukses($outp); //Tampilkan Pesan
+		if (!$outp) $_SESSION['success'] = -1;
 	}
 
 	/*

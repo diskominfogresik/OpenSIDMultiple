@@ -46,13 +46,5 @@
 		return $latar_login;
 	}
 
-	// Mengambil latar belakang login mandiri ubahan
-	public function latar_login_mandiri()
-	{
-		$ubahan = LATAR_LOGIN . "latar_login_mandiri.jpg";
-		$latar_login_mandiri = is_file($ubahan) ? $ubahan : NULL;
-		return $latar_login_mandiri;
-	}
-
 }
 ?>

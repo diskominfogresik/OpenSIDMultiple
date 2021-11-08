@@ -5,6 +5,8 @@ class Bip_ektp_model extends Import_model {
 	public function __construct()
 	{
 		parent::__construct();
+		ini_set('memory_limit', '512M');
+		set_time_limit(3600);
 	}
 
 	/* 	======================================================

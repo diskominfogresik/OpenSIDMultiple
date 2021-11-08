@@ -540,8 +540,3 @@ div.form-surat .content-header {
 #codeigniter_profiler {
 	margin-left: 100px;
 }
-
-/* Button Tanpa Aksi */
-.btn-proses {
-	cursor: not-allowed;
-}
