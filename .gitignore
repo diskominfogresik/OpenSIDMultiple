@@ -32,6 +32,7 @@ assets/files/gis/garis/*
 assets/files/dokumen/*
 !assets/files/dokumen/index.html
 # Jangan simpan isi folder desa. Isinya khusus desa.
+sites-desa/*
 desa/*
 surat/arsip/
 !surat/arsip/.keep
