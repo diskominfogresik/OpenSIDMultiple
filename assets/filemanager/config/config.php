@@ -72,7 +72,7 @@ define('DEBUG_ERROR_MESSAGE', TRUE); // TRUE or FALSE
 */
 
 $folder_app = strtolower(substr($_SERVER['REQUEST_URI'],0,strrpos($_SERVER['REQUEST_URI'],'/assets')));
-
+$namaDesa = end(explode(DIRECTORY_SEPARATOR, $_SERVER['DOCUMENT_ROOT']));
 $config = array(
 
 		/*
@@ -103,7 +103,7 @@ $config = array(
 		| with final /
 		|
 		*/
-		'current_path' => '../../desa/upload/media/',
+		'current_path' => '../../sites/'.$namaDesa.'/desa/upload/media/',
 
 		/*
 		|--------------------------------------------------------------------------
@@ -114,7 +114,7 @@ $config = array(
 		| DO NOT put inside upload folder
 		|
 		*/
-		'thumbs_base_path' => '../../desa/upload/thumbs/',
+		'thumbs_base_path' => '../../sites/'.$namaDesa.'/desa/upload/thumbs/',		
 
 		/*
 		|--------------------------------------------------------------------------
@@ -125,7 +125,8 @@ $config = array(
 		| DO NOT put inside upload folder
 		|
 		*/
-		'thumbs_upload_dir' => '/desa/upload/thumbs/',
+		'thumbs_upload_dir' => '../../desa/upload/thumbs/',
+
 
 		/*
 		|--------------------------------------------------------------------------

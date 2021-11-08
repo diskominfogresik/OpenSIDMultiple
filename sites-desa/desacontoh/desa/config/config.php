@@ -20,4 +20,4 @@
 */
 	$config['token_tracksid'] = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6bnVsbCwidGltZXN0YW1wIjoxNjAzNDY2MjM5fQ.HVCNnMLokF2tgHwjQhSIYo6-2GNXB4-Kf28FSIeXnZw";
 
-$config['sess_cookie_name'] = 'ci_session_abarabir';
+	$config['sess_cookie_name'] = 'ci_session_desacontoh'; 
