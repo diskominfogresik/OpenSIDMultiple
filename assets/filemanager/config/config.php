@@ -103,7 +103,7 @@ $config = array(
 		| with final /
 		|
 		*/
-		'current_path' => '../../sites/'.$namaDesa.'/desa/upload/media/',
+		'current_path' => '../../sites-desa/'.$namaDesa.'/desa/upload/media/',
 
 		/*
 		|--------------------------------------------------------------------------
@@ -114,7 +114,7 @@ $config = array(
 		| DO NOT put inside upload folder
 		|
 		*/
-		'thumbs_base_path' => '../../sites/'.$namaDesa.'/desa/upload/thumbs/',		
+		'thumbs_base_path' => '../../sites-desa/'.$namaDesa.'/desa/upload/thumbs/',		
 
 		/*
 		|--------------------------------------------------------------------------
