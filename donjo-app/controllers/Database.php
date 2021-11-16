@@ -365,8 +365,7 @@ class Database extends Admin_Controller {
 
 	public function desa_backup()
 	{
-		$namaDesa=end(explode(DIRECTORY_SEPARATOR,$_SERVER['DOCUMENT_ROOT']));
-		$backup_folder = FCPATH.'sites-desa/'. $namaDesa . '/' .'desa/'; // Folder yg akan di backup
+		$backup_folder = FCPATH .'desa/'; // Folder yg akan di backup
 		$this->zip->read_dir($backup_folder, FALSE);
 		$this->zip->download('backup_folder_desa_'.date('Y_m_d').'.zip');
 	}

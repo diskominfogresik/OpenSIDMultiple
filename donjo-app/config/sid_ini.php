@@ -39,8 +39,7 @@ $config['defaultAdminAuthInfo'] = array(
 // ==========================================================================
 
 // Konfigurasi tambahan untuk aplikasi
-$namaDesa=end(explode(DIRECTORY_SEPARATOR,$_SERVER['DOCUMENT_ROOT']));
-$extra_app_config = FCPATH . 'sites-desa/'. $namaDesa . '/' . LOKASI_SID_INI . 'config.php';
+$extra_app_config = FCPATH  . LOKASI_SID_INI . 'config.php';
 if (is_file($extra_app_config)) {
 	require_once($extra_app_config);
 } else {

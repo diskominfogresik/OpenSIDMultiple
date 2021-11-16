@@ -701,8 +701,7 @@ function sql_in_list($list_array)
 function ambilBerkas($nama_berkas, $redirect_url, $unique_id = null, $lokasi = LOKASI_ARSIP)
 {
 	// Tentukan path berkas (absolut)
-	$namaDesa=end(explode(DIRECTORY_SEPARATOR,$_SERVER['DOCUMENT_ROOT']));
-    $pathBerkas = FCPATH . 'sites-desa/'.$namaDesa.'/'.$lokasi . $nama_berkas;
+    $pathBerkas = FCPATH . $lokasi . $nama_berkas;
 	$pathBerkas = str_replace('/', DIRECTORY_SEPARATOR, $pathBerkas);
 	// Redirect ke halaman surat masuk jika path berkas kosong atau berkasnya tidak ada
 	if (!file_exists($pathBerkas))
