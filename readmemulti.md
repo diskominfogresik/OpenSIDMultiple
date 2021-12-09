@@ -6,26 +6,52 @@ openSID Multiple adalah Sistem Informasi Desa yang berisi beberapa desa sekaligu
 
 #### Rekap penyesuaian config pada source code opensid
 
-- file donjo-app/controllers/Database.php
+- file index.php
 
   kode awal
 
-  
-
-  kode perubahan
-  
   ```php
-  $namaDesa=end(explode(DIRECTORY_SEPARATOR,$_SERVER['DOCUMENT_ROOT']));
-  $backup_folder = FCPATH.'sites-desa/'. $namaDesa . '/' .'desa/'; // Folder yg akan di backup  
+   define('FCPATH', dirname(__FILE__).DIRECTORY_SEPARATOR);
   ```
 
-- file donjo-app/config/config.php
+  kode perubahan
 
-  
+  ```php
+  $namaDesa=end(explode(DIRECTORY_SEPARATOR,$_SERVER['DOCUMENT_ROOT']));
+  define('FCPATH', dirname(__FILE__). '/sites-desa/'. $namaDesa.DIRECTORY_SEPARATOR);
+  ```
 
-- file donjo-app/config/sid_ini.php
+- file donjo-app/models/Surat_model.php 
 
-- file donjo-app/helpers/opensid_helpers.php
+  fungsi sisipkan_logo
+
+  ```php
+  $file_logo = APPPATH . '../' . LOKASI_LOGO_DESA . $nama_logo;
+  ```
+
+  menjadi
+
+  ```php 
+  $file_logo = FCPATH . LOKASI_LOGO_DESA . $nama_logo;
+  ```
+
+
+
+​		fungsi sisipkan_foto
+
+```php
+$file_foto = APPPATH . '../' . LOKASI_USER_PICT . $nama_foto;
+```
+
+​		menjadi
+
+```php
+$file_foto = FCPATH . LOKASI_USER_PICT . $nama_foto;
+```
+
+
+
+- --------------
 
 
 
