@@ -653,7 +653,8 @@ class Surat_model extends CI_Model {
 
 	private function sisipkan_logo($nama_logo, $buffer)
 	{
-		$file_logo = APPPATH . '../' . LOKASI_LOGO_DESA . $nama_logo;
+		//$file_logo = APPPATH . '../' . LOKASI_LOGO_DESA . $nama_logo;
+		$file_logo = FCPATH . LOKASI_LOGO_DESA . $nama_logo;
 		if (!is_file($file_logo)) return $buffer;
 		// Akhiran dan awalan agak panjang supaya unik
 		$akhiran_logo = 'e33874670000000049454e44ae426082';
@@ -680,7 +681,8 @@ class Surat_model extends CI_Model {
 
 	private function sisipkan_foto($nama_foto, $buffer)
 	{
-		$file_foto = APPPATH . '../' . LOKASI_USER_PICT . $nama_foto;
+		//$file_foto = APPPATH . '../' . LOKASI_USER_PICT . $nama_foto;
+		$file_foto = FCPATH . LOKASI_USER_PICT .$nama_foto;
 		if (!is_file($file_foto)) return $buffer;
 		$akhiran_foto = 'c37e16e40000000049454e44ae426082';
 		$awalan_foto = '89504e470d0a1a0a0000000d49484452000000c8000000fa0803000000d3';
