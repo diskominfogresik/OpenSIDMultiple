@@ -1,4 +1,4 @@
-<?php class lapak_model extends CI_Model
+<?php class Lapak_model extends CI_Model
 {
 
 	private $table = 'lapak';

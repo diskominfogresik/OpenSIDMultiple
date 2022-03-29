@@ -1,3 +1,4 @@
+
 <?php class Lapak extends Admin_Controller
 {
     private $_set_page;
@@ -6,7 +7,7 @@
     public function __construct()
     {
         parent::__construct();
-        $this->load->model('lapak_model');
+        $this->load->model('Lapak_model');
         $this->modul_ini = 16;
         $this->sub_modul_ini = 21;
         $this->_set_page = ['50', '100', '200'];
@@ -36,7 +37,7 @@
 
         $data['func'] = 'index';
         // $data['set_page'] = $this->_set_page;
-        $data['lapak'] = $this->lapak_model->get_data();
+        $data['lapak'] = $this->Lapak_model->get_data();
         // $data['main'] = $this->penduduk_model->list_data($o, $data['paging']->offset, $data['paging']->per_page);
         $this->set_minsidebar(1);
         $this->render('lapak', $data);
@@ -46,7 +47,7 @@
     {
         $this->load->model('lapak');
         $keyword = $this->input->get('keyword');
-        $data = $this->lapak_model->cari($keyword);
+        $data = $this->Lapak_model->cari($keyword);
         $data = array(
             'keyword'    => $keyword,
             'data'        => $data
@@ -77,7 +78,7 @@
 
         $data['p'] = $p;
         $data['o'] = $o;
-        $data['lapak'] = $this->lapak_model->getById($id);
+        $data['lapak'] = $this->Lapak_model->getById($id);
 
 
         // var_dump($data);
@@ -104,7 +105,7 @@
 
         $data['p'] = $p;
         $data['o'] = $o;
-        $query = $this->lapak_model->getById($id);
+        $query = $this->Lapak_model->getById($id);
         // $data['lapak'] = $query;
         // echo json_encode($data);
 
@@ -128,12 +129,12 @@
 
 
 
-        // $upload = $this->lapak_model->upload_foto($foto);
+        // $upload = $this->Lapak_model->upload_foto($foto);
 
 
         $ArrInsert =
             [
-                'id_lapak' => $id_lapak,
+               // 'id_lapak' => $id_lapak,
                 'nama_lapak' => $nama,
                 'kontak_lapak' => $kontak,
                 'lokasi_lapak' => $lokasi,
@@ -142,9 +143,9 @@
                 'koordinat' => $koordinat
             ];
 
+	
 
-
-        $this->lapak_model->insert($ArrInsert);
+        $this->Lapak_model->insert($ArrInsert);
         redirect(base_url('lapak'));
     }
 
@@ -153,14 +154,14 @@
 
     public function update($id)
     {
-        $lapak = $this->lapak_model;
+        $lapak = $this->Lapak_model;
         $id_lapak = $this->input->post("id_lapak");
         $deskripsi = $this->input->post("deskripsi");
         $nama = $this->input->post("nama_lapak");
         $kontak = $this->input->post("kontak_lapak");
         $lokasi = $this->input->post("lokasi_lapak");
         $foto = $this->input->post("foto_lapak");
-        // $upload = $this->lapak_model->upload_foto($foto);
+        // $upload = $this->Lapak_model->upload_foto($foto);
 
         $ArrInsert =
             [
@@ -172,13 +173,13 @@
                 'deskripsi' => $deskripsi
             ];
         print_r($ArrInsert);
-        $this->lapak_model->insert($ArrInsert);
+        $this->Lapak_model->insert($ArrInsert);
         redirect(base_url('lapak'));
     }
     public function delete($p = 1, $o = 0, $id = '')
     {
         // $this->redirect_hak_akses('h', "lapak/index/$p/$o");
-        $this->lapak_model->delete($id);
+        $this->Lapak_model->delete($id);
         redirect(site_url('lapak'));
     }
 
@@ -186,7 +187,7 @@
     {
 
 
-        $this->lapak_model->delete_all(); // Panggil fungsi delete dari model
+        $this->Lapak_model->delete_all(); // Panggil fungsi delete dari model
 
         redirect('lapak/index');
     }

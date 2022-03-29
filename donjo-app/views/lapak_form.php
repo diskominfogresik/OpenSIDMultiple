@@ -3,7 +3,7 @@
         <h1>Data Lapak</h1>
         <ol class="breadcrumb">
             <li><a href="<?= site_url('hom_sid') ?>"><i class="fa fa-home"></i> Home</a></li>
-            <li><a href="<?= site_url('penduduk/clear') ?>"> Daftar Lapak</a></li>
+            <li><a href="<?= site_url('lapak/clear') ?>"> Daftar Lapak</a></li>
             <li class="active">Data Lapak</li>
         </ol>
     </section>
