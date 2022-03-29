@@ -1,5 +1,5 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') or exit('No direct script access allowed');
 
 /*
 | -------------------------------------------------------------------------
@@ -55,7 +55,7 @@ $route['translate_uri_dashes'] = FALSE;
 
 $route['sitemap\.xml'] = "Sitemap/index";
 $route['feed\.xml'] = "Feed/index";
-$route ['ppid'] = "Api_informasi_publik/ppid";
+$route['ppid'] = "Api_informasi_publik/ppid";
 
 // Artikel
 $route['artikel/(:num)'] = 'first/artikel/$1'; // Contoh : artikel/1
@@ -63,6 +63,7 @@ $route['artikel/(:num)/(:num)/(:num)/(:any)'] = 'first/artikel/$4'; // Contoh : 
 // Artikel lama (Agar url lama masih dpt di akases)
 $route['first/artikel/(:num)'] = 'first/artikel/$1'; // Contoh : Contoh : first/artikel/1
 $route['first/artikel/(:num)/(:num)/(:num)/(:any)'] = 'first/artikel/$4'; // Contoh : first/artikel/2020/5/15/contoh-artikel
+$route['homelapak'] = 'first/home_lapak'; //Lapak Home
 
 // Route bumindes
 $route['bumindes_umum/([a-z_]+)/(:any)'] = "buku_umum/bumindes_umum/$1/$2";
@@ -70,8 +71,7 @@ $route['bumindes_umum/([a-z_]+)'] = "buku_umum/bumindes_umum/$1";
 $route['bumindes_umum'] = "buku_umum/bumindes_umum";
 
 $buku_umum = ['ekspedisi', 'lembaran_desa', 'pengurus', 'surat_keluar', 'surat_masuk'];
-foreach ($buku_umum as $menu)
-{
+foreach ($buku_umum as $menu) {
 	$route["{$menu}/([a-z_]+)/(:any)/(:any)/(:any)"] = "buku_umum/{$menu}/$1/$2/$3/$4";
 	$route["{$menu}/([a-z_]+)/(:any)/(:any)"] = "buku_umum/{$menu}/$1/$2/$3";
 	$route["{$menu}/([a-z_]+)/(:any)"] = "buku_umum/{$menu}/$1/$2";
@@ -140,3 +140,5 @@ $route['layanan-mandiri/surat/buat-surat'] = 'layanan_mandiri/surat/buat_surat';
 $route['layanan-mandiri/surat/buat-surat/(:num)'] = 'layanan_mandiri/surat/buat_surat/$1'; //Ubah Surat Permohonan yg tdk lengkap
 // Mandiri Bantuan
 $route['layanan-mandiri/bantuan'] = 'layanan_mandiri/bantuan'; // Bantuan
+
+$route['lapak'] = 'lapak/index'; // Bantuan

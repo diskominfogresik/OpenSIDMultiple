@@ -1,6 +1,6 @@
 <?php
 
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') or exit('No direct script access allowed');
 
 /**
  * File ini:
@@ -58,6 +58,7 @@ define("LOKASI_SURAT_FORM_DESA", 'desa/template-surat/form/');
 define("LOKASI_SURAT_PRINT_DESA", 'desa/template-surat/print/');
 define("LOKASI_SURAT_EXPORT_DESA", 'desa/template-surat/export/');
 define("LOKASI_USER_PICT", 'desa/upload/user_pict/');
+define("LOKASI_LAPAK_PICT", 'desa/upload/lapak_pict/');
 define("LOKASI_GALERI", 'desa/upload/galeri/');
 define("LOKASI_FOTO_ARTIKEL", 'desa/upload/artikel/');
 define("LOKASI_FOTO_LOKASI", 'desa/upload/gis/lokasi/');
@@ -370,10 +371,10 @@ function AmbilVersi()
 function favico_desa()
 {
 	$favico = 'favicon.ico';
-	$namaDesa=end(explode(DIRECTORY_SEPARATOR,$_SERVER['DOCUMENT_ROOT']));
-    $favico_desa = (is_file(APPPATH .'../'. 'sites-desa/'. $namaDesa . '/' . LOKASI_LOGO_DESA . $favico)) ?
-        base_url() . 'sites-desa/'. $namaDesa . '/' . LOKASI_LOGO_DESA . $favico :
-        base_url() . $favico;
+	$namaDesa = end(explode(DIRECTORY_SEPARATOR, $_SERVER['DOCUMENT_ROOT']));
+	$favico_desa = (is_file(APPPATH . '../' . 'sites-desa/' . $namaDesa . '/' . LOKASI_LOGO_DESA . $favico)) ?
+		base_url() . 'sites-desa/' . $namaDesa . '/' . LOKASI_LOGO_DESA . $favico :
+		base_url() . $favico;
 	return $favico_desa;
 }
 
@@ -387,14 +388,14 @@ function favico_desa()
  */
 function gambar_desa($nama_file, $type = FALSE, $file = FALSE)
 {
-	$namaDesa=end(explode(DIRECTORY_SEPARATOR,$_SERVER['DOCUMENT_ROOT']));
-    if (is_file(APPPATH .'../'. 'sites-desa/'. $namaDesa . '/' . LOKASI_LOGO_DESA . $nama_file)) {
-        return $logo_desa = ($file ? APPPATH.'../' . 'sites-desa/'. $namaDesa . '/' : base_url()) . LOKASI_LOGO_DESA . $nama_file;
-    }
+	$namaDesa = end(explode(DIRECTORY_SEPARATOR, $_SERVER['DOCUMENT_ROOT']));
+	if (is_file(APPPATH . '../' . 'sites-desa/' . $namaDesa . '/' . LOKASI_LOGO_DESA . $nama_file)) {
+		return $logo_desa = ($file ? APPPATH . '../' . 'sites-desa/' . $namaDesa . '/' : base_url()) . LOKASI_LOGO_DESA . $nama_file;
+	}
 
 	// type FALSE = logo, TRUE = kantor
 	$default = ($type)  ? 'opensid_kantor.jpg' : 'opensid_logo.png';
-	return $logo_desa = ($file ? APPPATH.'../' : base_url()). "assets/files/logo/$default";
+	return $logo_desa = ($file ? APPPATH . '../' : base_url()) . "assets/files/logo/$default";
 }
 
 /**
@@ -432,22 +433,19 @@ function session_success()
 // Untuk mengirim data ke OpenSID tracker
 function httpPost($url, $params)
 {
-	if (!extension_loaded('curl') OR isset($_SESSION['no_curl']))
-	{
-		log_message('error', 'curl tidak bisa dijalankan 1.'.$_SESSION['no_curl'].' 2.'.extension_loaded('curl'));
+	if (!extension_loaded('curl') or isset($_SESSION['no_curl'])) {
+		log_message('error', 'curl tidak bisa dijalankan 1.' . $_SESSION['no_curl'] . ' 2.' . extension_loaded('curl'));
 		return;
 	}
 
 	$postData = '';
 	//create name value pairs seperated by &
-	foreach ($params as $k => $v)
-	{
+	foreach ($params as $k => $v) {
 		$postData .= $k . '=' . $v . '&';
 	}
 	$postData = rtrim($postData, '&');
 
-	try
-	{
+	try {
 		$ch = curl_init();
 
 		curl_setopt($ch, CURLOPT_URL, $url);
@@ -464,16 +462,13 @@ function httpPost($url, $params)
 		curl_setopt($ch, CURLOPT_TIMEOUT, 1);*/
 		$output = curl_exec($ch);
 
-		if ($output === false)
-		{
+		if ($output === false) {
 			log_message('error', 'Curl error: ' . curl_error($ch));
 			log_message('error', print_r(curl_getinfo($ch), true));
 		}
 		curl_close($ch);
 		return $output;
-	}
-	catch (Exception $e)
-	{
+	} catch (Exception $e) {
 		return $e;
 	}
 }
@@ -488,27 +483,26 @@ function cek_koneksi_internet($sCheckHost = 'www.google.com')
 {
 	$connected = @fsockopen($sCheckHost, 443);
 
-  if ($connected)
-  {
-  	fclose($connected);
-  	return true;
-  }
-  return false;
+	if ($connected) {
+		fclose($connected);
+		return true;
+	}
+	return false;
 }
 
 function cek_bisa_akses_site($url)
 {
-  $ch = curl_init();
+	$ch = curl_init();
 
-  curl_setopt($ch, CURLOPT_URL, $url);
-  curl_setopt($ch, CURLOPT_HEADER, false);
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_URL, $url);
+	curl_setopt($ch, CURLOPT_HEADER, false);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-  $content = curl_exec($ch);
-  $error = curl_error($ch);
+	$content = curl_exec($ch);
+	$error = curl_error($ch);
 
-  curl_close($ch);
-  return empty($error);
+	curl_close($ch);
+	return empty($error);
 }
 
 /**
@@ -585,8 +579,7 @@ function umur($tgl_lahir)
 {
 	try {
 		$date = new DateTime($tgl_lahir);
-	}
-	catch (Exception $e) {
+	} catch (Exception $e) {
 		return null;
 	}
 	$now      = new DateTime();
@@ -641,9 +634,10 @@ function max_upload()
 function get_external_ip()
 {
 	// Batasi waktu mencoba
-	$options = stream_context_create(array('http'=>
+	$options = stream_context_create(array(
+		'http' =>
 		array(
-		'timeout' => 2 //2 seconds
+			'timeout' => 2 //2 seconds
 		)
 	));
 	$externalContent = file_get_contents('http://checkip.dyndns.com/', false, $options);
@@ -680,8 +674,7 @@ function sql_in_list($list_array)
 	if (empty($list_array)) return FALSE;
 
 	$prefix = $list = '';
-	foreach ($list_array as $key => $value)
-	{
+	foreach ($list_array as $key => $value) {
 		$list .= $prefix . "'" . $value . "'";
 		$prefix = ', ';
 	}
@@ -701,17 +694,15 @@ function sql_in_list($list_array)
 function ambilBerkas($nama_berkas, $redirect_url, $unique_id = null, $lokasi = LOKASI_ARSIP)
 {
 	// Tentukan path berkas (absolut)
-    $pathBerkas = FCPATH . $lokasi . $nama_berkas;
+	$pathBerkas = FCPATH . $lokasi . $nama_berkas;
 	$pathBerkas = str_replace('/', DIRECTORY_SEPARATOR, $pathBerkas);
 	// Redirect ke halaman surat masuk jika path berkas kosong atau berkasnya tidak ada
-	if (!file_exists($pathBerkas))
-	{
+	if (!file_exists($pathBerkas)) {
 		$_SESSION['success'] = -1;
 		$_SESSION['error_msg'] = 'Berkas tidak ditemukan';
 		if ($redirect_url)
 			redirect($redirect_url);
-		else
-		{
+		else {
 			http_response_code(404);
 			include(FCPATH . 'donjo-app/views/errors/html/error_404.php');
 			die();
@@ -719,8 +710,7 @@ function ambilBerkas($nama_berkas, $redirect_url, $unique_id = null, $lokasi = L
 	}
 	// OK, berkas ada. Ambil konten berkasnya
 	$data = file_get_contents($pathBerkas);
-	if (!is_null($unique_id))
-	{
+	if (!is_null($unique_id)) {
 		// Buang unique id pada nama berkas download
 		$nama_berkas = explode($unique_id, $nama_berkas);
 		$namaFile = $nama_berkas[0];
@@ -738,11 +728,10 @@ function ambilBerkas($nama_berkas, $redirect_url, $unique_id = null, $lokasi = L
 function autocomplete_data_ke_str($data)
 {
 	$str = '';
-	foreach ($data as $baris)
-	{
+	foreach ($data as $baris) {
 		$keys = array_keys($baris);
 		$first_key = $keys[0];
-		$str .= ','.json_encode(substr($baris[$first_key], 0, 30));
+		$str .= ',' . json_encode(substr($baris[$first_key], 0, 30));
 	}
 	$str = '[' . strtolower(substr($str, 1)) . ']';
 	return $str;
@@ -750,9 +739,10 @@ function autocomplete_data_ke_str($data)
 
 // Periksa apakah nilai bilangan Romawi
 // https://recalll.co/?q=How%20to%20convert%20a%20Roman%20numeral%20to%20integer%20in%20PHP?&type=code
-function is_angka_romawi($roman) {
-  $roman_regex='/^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/';
-  return preg_match($roman_regex, $roman) > 0;
+function is_angka_romawi($roman)
+{
+	$roman_regex = '/^M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$/';
+	return preg_match($roman_regex, $roman) > 0;
 }
 
 function bulan_romawi($bulan)
@@ -792,38 +782,31 @@ function buang_nondigit($str)
 		- full-path-ke-berkas
 	Untuk membuat folder di dalam zip gunakan:
 		$file = array('nama' => 'dir', 'file' => nama-folder)
-*/
-function masukkan_zip($files=array())
+ */
+function masukkan_zip($files = array())
 {
-  $zip = new ZipArchive();
-  # create a temp file & open it
-  $tmp_file = tempnam(sys_get_temp_dir(),'');
-  $zip->open($tmp_file, ZipArchive::CREATE);
+	$zip = new ZipArchive();
+	# create a temp file & open it
+	$tmp_file = tempnam(sys_get_temp_dir(), '');
+	$zip->open($tmp_file, ZipArchive::CREATE);
 
-  foreach ($files as $file)
-  {
-		if (is_array($file))
-		{
-			if ($file['nama'] == 'dir')
-			{
+	foreach ($files as $file) {
+		if (is_array($file)) {
+			if ($file['nama'] == 'dir') {
 				$zip->addEmptyDir($file['file']);
 				continue;
-			}
-			else
-			{
+			} else {
 				$nama_file = $file['nama'];
 				$file = $file['file'];
 			}
-		}
-		else
-		{
+		} else {
 			$nama_file = basename($file);
 		}
-    $download_file = file_get_contents($file);
-    $zip->addFromString($nama_file, $download_file);
-  }
-  $zip->close();
-  return $tmp_file;
+		$download_file = file_get_contents($file);
+		$zip->addFromString($nama_file, $download_file);
+	}
+	$zip->close();
+	return $tmp_file;
 }
 
 function alfa_spasi($str)
@@ -832,19 +815,25 @@ function alfa_spasi($str)
 }
 
 // https://www.php.net/manual/en/function.array-column.php
-function array_column_ext($array, $columnkey, $indexkey = null) {
-  $result = array();
-  foreach ($array as $subarray => $value) {
-    if (array_key_exists($columnkey,$value)) { $val = $array[$subarray][$columnkey]; }
-    else if ($columnkey === null) { $val = $value; }
-    else { continue; }
+function array_column_ext($array, $columnkey, $indexkey = null)
+{
+	$result = array();
+	foreach ($array as $subarray => $value) {
+		if (array_key_exists($columnkey, $value)) {
+			$val = $array[$subarray][$columnkey];
+		} else if ($columnkey === null) {
+			$val = $value;
+		} else {
+			continue;
+		}
 
-    if ($indexkey === null) { $result[] = $val; }
-    elseif ($indexkey == -1 || array_key_exists($indexkey,$value)) {
-      $result[($indexkey == -1)?$subarray:$array[$subarray][$indexkey]] = $val;
-    }
-  }
-  return $result;
+		if ($indexkey === null) {
+			$result[] = $val;
+		} elseif ($indexkey == -1 || array_key_exists($indexkey, $value)) {
+			$result[($indexkey == -1) ? $subarray : $array[$subarray][$indexkey]] = $val;
+		}
+	}
+	return $result;
 }
 
 function nama_file($str)
@@ -920,48 +909,43 @@ function alamat_web($str)
 
 function buat_slug($data_slug)
 {
-	$slug = $data_slug['thn'].'/'.$data_slug['bln'].'/'.$data_slug['hri'].'/'.$data_slug['slug'];
+	$slug = $data_slug['thn'] . '/' . $data_slug['bln'] . '/' . $data_slug['hri'] . '/' . $data_slug['slug'];
 	return $slug;
 }
 
 function namafile($str)
 {
 	$tgl =  date('d_m_Y');
-	$filename = urlencode(underscore(strtolower($str))."_".$tgl);
+	$filename = urlencode(underscore(strtolower($str)) . "_" . $tgl);
 	return $filename;
 }
 
-function luas($int=0, $satuan="meter")
+function luas($int = 0, $satuan = "meter")
 {
-	if (($int / 10000) >= 1)
-	{
-		$ukuran = $int/10000;
+	if (($int / 10000) >= 1) {
+		$ukuran = $int / 10000;
 		$pisah = explode('.', $ukuran);
 		$luas['ha'] = number_format($pisah[0]);
-		$luas['meter'] = round(($ukuran-$luas["ha"])*10000, 2);
+		$luas['meter'] = round(($ukuran - $luas["ha"]) * 10000, 2);
+	} else {
+		$luas['ha'] = 0;
+		$luas['meter'] = round($int, 2);
 	}
-	else
-	{
-		$luas['ha'] =0;
-		$luas['meter'] = round($int,2);
-	}
-	$hasil = ($int!=0)?$luas[$satuan]:null;
+	$hasil = ($int != 0) ? $luas[$satuan] : null;
 	return $hasil;
 }
 
-function list_mutasi($mutasi=[])
+function list_mutasi($mutasi = [])
 {
-	if($mutasi)
-	{
-		foreach($mutasi as $item)
-		{
-			$div = ($item['jenis_mutasi'] == 2)? 'class="error"':null;
+	if ($mutasi) {
+		foreach ($mutasi as $item) {
+			$div = ($item['jenis_mutasi'] == 2) ? 'class="error"' : null;
 			$hasil = "<p $div>";
 			$hasil .= $item['sebabmutasi'];
-			$hasil .= !empty($item['no_c_desa']) ? " ".ket_mutasi_persil($item['jenis_mutasi'])." C No ".sprintf("%04s",$item['no_c_desa']): null;
-			$hasil .= !empty($item['luasmutasi']) ? ", Seluas ".number_format($item['luasmutasi'])." m<sup>2</sup>, " : null;
-			$hasil .= !empty($item['tanggalmutasi']) ? tgl_indo_out($item['tanggalmutasi'])."<br />" : null;
-			$hasil .= !empty($item['keterangan']) ? $item['keterangan']: null;
+			$hasil .= !empty($item['no_c_desa']) ? " " . ket_mutasi_persil($item['jenis_mutasi']) . " C No " . sprintf("%04s", $item['no_c_desa']) : null;
+			$hasil .= !empty($item['luasmutasi']) ? ", Seluas " . number_format($item['luasmutasi']) . " m<sup>2</sup>, " : null;
+			$hasil .= !empty($item['tanggalmutasi']) ? tgl_indo_out($item['tanggalmutasi']) . "<br />" : null;
+			$hasil .= !empty($item['keterangan']) ? $item['keterangan'] : null;
 			$hasil .= "</p>";
 
 			echo $hasil;
@@ -969,105 +953,94 @@ function list_mutasi($mutasi=[])
 	}
 }
 
-function ket_mutasi_persil($id=0)
+function ket_mutasi_persil($id = 0)
 {
-	if ($id==1)
+	if ($id == 1)
 		$ket = "dari";
 	else
 		$ket = "ke";
 	return $ket;
 }
 
-function status_sukses($outp, $gagal_saja=false, $msg='')
+function status_sukses($outp, $gagal_saja = false, $msg = '')
 {
-	$CI =& get_instance();
+	$CI = &get_instance();
 	if ($msg) $CI->session->error_msg = $msg;
-	if ($gagal_saja)
-	{
+	if ($gagal_saja) {
 		if (!$outp) $CI->session->success = -1;
-	}
-	else
+	} else
 		$CI->session->success = $outp ? 1 : -1;
 }
 
 // https://stackoverflow.com/questions/11807115/php-convert-kb-mb-gb-tb-etc-to-bytes
 function convertToBytes(string $from)
 {
-  $units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
-  $number = substr($from, 0, -2);
-  $suffix = strtoupper(substr($from,-2));
+	$units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+	$number = substr($from, 0, -2);
+	$suffix = strtoupper(substr($from, -2));
 
-  //B or no suffix
-  if(is_numeric(substr($suffix, 0, 1))) {
-      return preg_replace('/[^\d]/', '', $from);
-  }
+	//B or no suffix
+	if (is_numeric(substr($suffix, 0, 1))) {
+		return preg_replace('/[^\d]/', '', $from);
+	}
 
-  $exponent = array_flip($units);
-  $exponent = isset($exponent[$suffix]) ? $exponent[$suffix] : null;
-  if($exponent === null) {
-      return null;
-  }
+	$exponent = array_flip($units);
+	$exponent = isset($exponent[$suffix]) ? $exponent[$suffix] : null;
+	if ($exponent === null) {
+		return null;
+	}
 
-  return $number * (1024 ** $exponent);
+	return $number * (1024 ** $exponent);
 }
 
-  /**
-  * Disalin dari FeedParser.php
-	* Load the whole contents of a web page
-	*
-	* @access   public
-	* @param    string
-	* @return   string
-	*/
-	function getUrlContent($url)
-	{
-		if (empty($url))
-		{
-			throw new Exception("URL to parse is empty!.");
-			return false;
-		}
-		if (!in_array(explode(':', $url)[0], array('http', 'https')))
-		{
-			throw new Exception("URL harus http atau https");
-			return false;
-		}
-		if ($content = @file_get_contents($url))
-		{
+/**
+ * Disalin dari FeedParser.php
+ * Load the whole contents of a web page
+ *
+ * @access   public
+ * @param    string
+ * @return   string
+ */
+function getUrlContent($url)
+{
+	if (empty($url)) {
+		throw new Exception("URL to parse is empty!.");
+		return false;
+	}
+	if (!in_array(explode(':', $url)[0], array('http', 'https'))) {
+		throw new Exception("URL harus http atau https");
+		return false;
+	}
+	if ($content = @file_get_contents($url)) {
+		return $content;
+	} else {
+		$ch = curl_init();
+
+		curl_setopt($ch, CURLOPT_URL, $url);
+		curl_setopt($ch, CURLOPT_HEADER, false);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+		$content = curl_exec($ch);
+		$error = curl_error($ch);
+
+		curl_close($ch);
+
+		if (empty($error)) {
 			return $content;
-		}
-		else
-		{
-			$ch = curl_init();
-
-			curl_setopt($ch, CURLOPT_URL, $url);
-			curl_setopt($ch, CURLOPT_HEADER, false);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-			$content = curl_exec($ch);
-			$error = curl_error($ch);
-
-			curl_close($ch);
-
-			if (empty($error))
-			{
-				return $content;
-			}
-			else
-			{
-				log_message('error', "Error occured while loading url by cURL. <br />\n" . $error) ;
-				return false;
-			}
+		} else {
+			log_message('error', "Error occured while loading url by cURL. <br />\n" . $error);
+			return false;
 		}
 	}
+}
 
 function crawler()
 {
-	$file = APPPATH.'config/crawler-user-agents.json';
+	$file = APPPATH . 'config/crawler-user-agents.json';
 	$data = json_decode(file_get_contents($file), true);
 
-	foreach($data as $entry)
-	{
-		if (preg_match('/'.strtolower($entry['pattern']).'/', $_SERVER['HTTP_USER_AGENT']))
+	foreach ($data as $entry) {
+		if (preg_match('/' . strtolower($entry['pattern']) . '/', $_SERVER['HTTP_USER_AGENT']))
 			return TRUE;
 	}
 
@@ -1076,7 +1049,7 @@ function crawler()
 
 function pre_print_r($data)
 {
-	print("<pre>".print_r($data, true)."</pre>");
+	print("<pre>" . print_r($data, true) . "</pre>");
 }
 
 // Kode Wilayah Dengan Titik

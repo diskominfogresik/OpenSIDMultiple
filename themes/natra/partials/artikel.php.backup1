@@ -1,0 +1,118 @@
+<?php if (!defined('BASEPATH')) exit('No direct script access allowed'); ?>
+
+<?php if ($single_artikel["id"]) : ?>
+	<div class="single_page_area" id="<?= 'artikel-' . $single_artikel['judul'] ?>">
+		<div style="margin-top:0px;">
+			<?php if (!empty($teks_berjalan)) : ?>
+				<marquee onmouseover="this.stop()" onmouseout="this.start()">
+					<?php $this->load->view($folder_themes . '/layouts/teks_berjalan.php'); ?>
+				</marquee>
+			<?php endif; ?>
+		</div>
+		<div class="single_category wow fadeInDown">
+			<h2> <span class="bold_line"><span></span></span> <span class="solid_line"></span> <span class="title_text">Artikel</span> </h2>
+		</div>
+
+	</div>
+
+
+	<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="exampleModalLabel">Deskripsi</h5>
+					<button type="button" class="close" data-dismiss="modal">
+						<span aria-hidden="true"></span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<p>Tes Ini adalah Modal</p>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="row">
+
+		<div class="col-sm-4">
+			<div class="caption text-center" onclick="location.href='https://flow.microsoft.com/en-us/connectors/shared_slack/slack/'">
+				<div class="position-relative">
+					<!-- <img src="https://az818438.vo.msecnd.net/icons/slack.png" style="width:72px;height:72px;" /> -->
+					<img src="https://az818438.vo.msecnd.net/icons/slack.png" />
+				</div>
+			</div>
+			<div class="card-body">
+				<div class="font-weight-bold "><b> Thrift Dea Syarifa</b></div>
+				<br>
+				<div class="d-flex justify-content-between align-items-center mt-2">
+					<div class="btn-group">
+						<a class="btn btn-sm btn-success" href="https://api.whatsapp.com/send?phone=+628157985118&amp;text=Silahkan ketik pesan anda" rel="noopener noreferrer" target="_blank" title="WhatsApp +628157985118"><i class="fa fa-whatsapp"></i> Pesan</a>
+						<a class="btn btn-sm btn-danger text-white" data-remote="false" data-toggle="modal" data-target="#modalBesar2" title="Titik Lokasi"><i class="fa fa-map"></i> Lokasi</a>
+						<a class="btn btn-sm btn-primary text-white" data-remote="false" data-toggle="modal" data-target="#exampleModal" title="Deskripsi"><i class="fa fa-info-circle"></i> Deskripsi</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-sm-4">
+			<div class="caption text-center" onclick="location.href='https://flow.microsoft.com/en-us/connectors/shared_slack/slack/'">
+				<div class="position-relative">
+					<!-- <img src="https://az818438.vo.msecnd.net/icons/slack.png" style="width:72px;height:72px;" /> -->
+					<img src="https://az818438.vo.msecnd.net/icons/slack.png" />
+				</div>
+			</div>
+			<div class="card-body">
+				<div class="font-weight-bold "><b> Shoelutions</b></div>
+				<br>
+				<div class="d-flex justify-content-between align-items-center mt-2">
+					<div class="btn-group">
+						<a class="btn btn-sm btn-success" href="https://api.whatsapp.com/send?phone=+628157985118&amp;text=Silahkan ketik pesan anda" rel="noopener noreferrer" target="_blank" title="WhatsApp +628157985118"><i class="fa fa-whatsapp"></i> Pesan</a>
+						<a class="btn btn-sm btn-danger text-white" data-remote="false" data-toggle="modal" data-target="#modalBesar2" title="Titik Lokasi"><i class="fa fa-map"></i> Lokasi</a>
+						<a class="btn btn-sm btn-primary text-white" data-remote="false" data-toggle="modal" data-target="#exampleModal" title="Deskripsi"><i class="fa fa-info-circle"></i> Deskripsi</a>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-sm-4">
+			<div class="caption text-center" onclick="location.href='https://flow.microsoft.com/en-us/connectors/shared_slack/slack/'">
+				<div class="position-relative">
+					<!-- <img src="https://az818438.vo.msecnd.net/icons/slack.png" style="width:72px;height:72px;" /> -->
+					<img src="https://az818438.vo.msecnd.net/icons/slack.png" />
+				</div>
+			</div>
+			<div class="card-body">
+				<div class="font-weight-bold "><b> Wisata Desa nya Rara</b></div>
+				<br>
+				<div class="d-flex justify-content-between align-items-center mt-2">
+					<div class="btn-group">
+						<a class="btn btn-sm btn-success" href="https://api.whatsapp.com/send?phone=+628157985118&amp;text=Silahkan ketik pesan anda" rel="noopener noreferrer" target="_blank" title="WhatsApp +628157985118"><i class="fa fa-whatsapp"></i> Pesan</a>
+						<a class="btn btn-sm btn-danger text-white" data-remote="false" data-toggle="modal" data-target="#modalBesar2" title="Titik Lokasi"><i class="fa fa-map"></i> Lokasi</a>
+						<a class="btn btn-sm btn-primary text-white" data-remote="false" data-toggle="modal" data-target="#exampleModal" title="Deskripsi"><i class="fa fa-info-circle"></i> Deskripsi</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+
+
+
+
+
+
+
+<?php else : ?>
+	<div class="artikel" id="artikel-blank">
+		<div class="col-lg-12 col-md-12 col-sm-12">
+			<div class="error_page_content">
+				<h1>404</h1>
+				<h2>Maaf</h2>
+				<h3>Halaman ini belum tersedia atau sedang dalam perbaikan</h3>
+				<p class="wow fadeInLeftBig">Silahkan kembali lagi ke halaman <a href="<?= site_url(); ?>first">Beranda</a></p>
+			</div>
+		</div>
+	</div>
+<?php endif; ?>
