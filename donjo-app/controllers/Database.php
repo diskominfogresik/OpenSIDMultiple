@@ -597,4 +597,19 @@ class Database extends Admin_Controller {
 
 		redirect('database/sinkronasi_opendk');
 	}
+
+	//TAMBAHAN KOMINFO
+	public function migrasi_db_cri_kominfogres()
+	{
+		$this->database_model->migrasi_db_cri_kominfogres();
+		redirect('database/migrasi_cri_kominfogres/1');
+	}
+	public function migrasi_cri_kominfogres()
+	{
+		$data['form_action'] = site_url("database/migrasi_db_cri_kominfogres");
+
+		$data['act_tab'] = 8;
+		$data['content'] = 'database/migrasi_dev_kominfo';
+		$this->load->view('database/database.tpl.php', $data);
+	}
 }

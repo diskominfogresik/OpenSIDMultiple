@@ -45,7 +45,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * @link 	https://github.com/OpenSID/OpenSID
  */
 
-class Database_model extends CI_Model {
+class Database_kominfogres_model extends CI_Model {
 
 	private $user = 1;
 
@@ -3794,9 +3794,4 @@ class Database_model extends CI_Model {
 		return array_column($data, 'TABLE_NAME');
 	}
 
-	//TAMBAHAN KOMINFO
-	public function migrasi_db_cri_kominfogres()
-	{
-		$this->jalankan_migrasi('migrasi_fitur_kominfo_1');
-  	}
 }
