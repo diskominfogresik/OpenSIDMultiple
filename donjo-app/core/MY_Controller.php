@@ -43,9 +43,10 @@
  * @link 	https://github.com/OpenSID/OpenSID
  */
 
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') or exit('No direct script access allowed');
 
-class MY_Controller extends CI_Controller {
+class MY_Controller extends CI_Controller
+{
 
 	/*
 	 * Common data
@@ -68,9 +69,9 @@ class MY_Controller extends CI_Controller {
 		// Tampilkan profiler untuk development
 		if (defined('ENVIRONMENT') && ENVIRONMENT == 'development')	$this->output->enable_profiler(TRUE);
 
-		$this->load->model(['setting_model']);			
-        $this->setting_model->init();
-	}	
+		$this->load->model(['setting_model']);
+		$this->setting_model->init();
+	}
 
 	/*
 	 * Bersihkan session cluster wilayah
@@ -78,40 +79,36 @@ class MY_Controller extends CI_Controller {
 	public function clear_cluster_session()
 	{
 		$cluster_session = array('dusun', 'rw', 'rt');
-		foreach ($cluster_session as $session)
-		{
+		foreach ($cluster_session as $session) {
 			$this->session->unset_userdata($session);
 		}
 	}
-
 }
 
-class Web_Controller extends MY_Controller {
+class Web_Controller extends MY_Controller
+{
 
 	/*
 	 * Constructor
 	 */
 	public function __construct()
 	{
-		parent::__construct();		
+		parent::__construct();
 		$this->controller = strtolower($this->router->fetch_class());
 		// Gunakan tema klasik kalau setting tema kosong atau folder di desa/themes untuk tema pilihan tidak ada
 		// if (empty($this->setting->web_theme) OR !is_dir(FCPATH.'desa/themes/'.$this->setting->web_theme))
-		$theme = preg_replace("/desa\//","",strtolower($this->setting->web_theme)) ;
+		$theme = preg_replace("/desa\//", "", strtolower($this->setting->web_theme));
 		$theme_folder = preg_match("/desa\//", strtolower($this->setting->web_theme)) ? "desa/themes" : "themes";
-		if (empty($this->setting->web_theme) OR !is_dir(FCPATH.$theme_folder.'/'.$theme))
-		{
+		if (empty($this->setting->web_theme) or !is_dir(FCPATH . $theme_folder . '/' . $theme)) {
 			$this->theme = 'klasik';
 			$this->theme_folder = 'themes';
-		}
-		else
-		{
+		} else {
 			$this->theme = $theme;
 			$this->theme_folder = $theme_folder;
 		}
 		// Variabel untuk tema
 		$this->template = "../../{$this->theme_folder}/{$this->theme}/template.php";
-		$this->includes['folder_themes'] = '../../'.$this->theme_folder.'/'.$this->theme;
+		$this->includes['folder_themes'] = '../../' . $this->theme_folder . '/' . $this->theme;
 	}
 
 	/*
@@ -124,14 +121,13 @@ class Web_Controller extends MY_Controller {
 		$theme_folder = self::get_instance()->theme_folder;
 		$theme_view = "../../$theme_folder/$theme/$view";
 
-		if (!is_file(APPPATH .'views/'. $theme_view))
-		{
+		if (!is_file(APPPATH . 'views/' . $theme_view)) {
 			$theme_view = "../../themes/klasik/$view";
 		}
 
 		return $theme_view;
-	}	
-	
+	}
+
 	/*
 	 * Set Template
 	 * sometime, we want to use different template for different page
@@ -147,7 +143,7 @@ class Web_Controller extends MY_Controller {
 	function set_template($template_file = 'template.php')
 	{
 		// make sure that $template_file has .php extension
-		$template_file = substr( $template_file, -4 ) == '.php' ? $template_file : ( $template_file . ".php" );
+		$template_file = substr($template_file, -4) == '.php' ? $template_file : ($template_file . ".php");
 
 		$template_file_path = FCPATH . $this->theme_folder . '/' . $this->theme . "/" . $template_file;
 		if (is_file($template_file_path))
@@ -155,10 +151,10 @@ class Web_Controller extends MY_Controller {
 		else
 			$this->template = '../../themes/klasik/' . $template_file;
 	}
-
 }
 
-class Mandiri_Controller extends MY_Controller {
+class Mandiri_Controller extends MY_Controller
+{
 
 	public $header;
 	public $cek_anjungan;
@@ -173,17 +169,17 @@ class Mandiri_Controller extends MY_Controller {
 		$this->cek_anjungan = $this->anjungan_model->cek_anjungan();
 		$this->is_login = $this->session->is_login;
 
-		if ($this->setting->layanan_mandiri == 0 && ! $this->cek_anjungan) show_404();
+		if ($this->setting->layanan_mandiri == 0 && !$this->cek_anjungan) show_404();
 
 		if ($this->session->mandiri != 1) redirect('layanan-mandiri/masuk');
 	}
-
 }
 
 /*
  * Untuk API read-only, seperti Api_informasi_publik
  */
-class Api_Controller extends MY_Controller {
+class Api_Controller extends MY_Controller
+{
 
 	/*
 	 * Constructor
@@ -195,13 +191,13 @@ class Api_Controller extends MY_Controller {
 
 	protected function log_request()
 	{
-		$message = 'API Request '.$this->input->server('REQUEST_URI').' dari '.$this->input->ip_address();
+		$message = 'API Request ' . $this->input->server('REQUEST_URI') . ' dari ' . $this->input->ip_address();
 		log_message('error', $message);
 	}
-
 }
 
-class Admin_Controller extends MY_Controller {
+class Admin_Controller extends MY_Controller
+{
 
 	public $grup;
 	public $CI = NULL;
@@ -216,22 +212,17 @@ class Admin_Controller extends MY_Controller {
 		$this->controller = strtolower($this->router->fetch_class());
 		$this->load->model(['header_model', 'user_model', 'notif_model']);
 		$this->grup	= $this->user_model->sesi_grup($_SESSION['sesi']);
-        
+
 		$this->load->model('modul_model');
-		if (!$this->modul_model->modul_aktif($this->controller))
-		{
+		if (!$this->modul_model->modul_aktif($this->controller)) {
 			session_error("Fitur ini tidak aktif");
 			redirect('/');
 		}
-		if (!$this->user_model->hak_akses($this->grup, $this->controller, 'b'))
-		{
-			if (empty($this->grup))
-			{
+		if (!$this->user_model->hak_akses($this->grup, $this->controller, 'b')) {
+			if (empty($this->grup)) {
 				$_SESSION['request_uri'] = $_SERVER['REQUEST_URI'];
 				redirect('siteman');
-			}
-			else
-			{
+			} else {
 				session_error("Anda tidak mempunyai akses pada fitur ini");
 				unset($_SESSION['request_uri']);
 				redirect('/');
@@ -244,13 +235,13 @@ class Admin_Controller extends MY_Controller {
 		$this->header['notif_komentar']         = $this->notif_model->komentar_baru();
 	}
 
+
 	private function cek_pengumuman()
 	{
 		if ($this->grup == 1) // hanya utk user administrator
 		{
 			$notifikasi = $this->notif_model->get_semua_notif();
-			foreach($notifikasi as $notif)
-			{
+			foreach ($notifikasi as $notif) {
 				$this->pengumuman = $this->notif_model->notifikasi($notif);
 				if ($notif['jenis'] == 'persetujuan') break;
 			}
@@ -263,8 +254,7 @@ class Admin_Controller extends MY_Controller {
 
 		if (empty($controller))
 			$controller = $this->controller;
-		if ( ! $this->user_model->hak_akses($this->grup, $controller, $akses))
-		{
+		if (!$this->user_model->hak_akses($this->grup, $controller, $akses)) {
 			session_error("Anda tidak mempunyai akses pada fitur ini");
 			if (empty($this->grup)) redirect('siteman');
 			empty($redirect) ? redirect($kembali) : redirect($redirect);
@@ -278,7 +268,7 @@ class Admin_Controller extends MY_Controller {
 		return $this->user_model->hak_akses($this->grup, $controller, $akses);
 	}
 
-	public function render($view, Array $data = NULL)
+	public function render($view, array $data = NULL)
 	{
 		$this->header['minsidebar'] = $this->get_minsidebar();
 		$this->load->view('header', $this->header);
@@ -307,5 +297,4 @@ class Admin_Controller extends MY_Controller {
 
 		return $this;
 	}
-
 }

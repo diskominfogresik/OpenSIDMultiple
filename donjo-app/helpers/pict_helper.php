@@ -97,6 +97,17 @@ function AmbilFoto($foto, $ukuran="kecil_", $sex='1')
 
 	return $file_foto;
 }
+function AmbilFotoLapak($foto, $ukuran="kecil_", $sex='1')
+{
+	if ($foto == 'kuser.png' || $foto == 'wuser.png') return base_url() . LOKASI_LAPAK_PICT . $foto;
+
+	
+
+	$ukuran = ($ukuran == "kecil_") ? "kecil_" : "";
+	$file_foto = base_url() . LOKASI_LAPAK_PICT . $ukuran . $foto;
+	
+	return $file_foto;
+}
 
 function UploadGambarWidget($nama_file, $lokasi_file, $old_gambar)
 {
@@ -118,6 +129,19 @@ function UploadFoto($fupload_name,$old_foto,$tipe_file="")
 	}
 	$nama_simpan = "kecil_".$fupload_name;
 	return UploadResizeImage(LOKASI_USER_PICT, $dimensi, "foto", $fupload_name, $nama_simpan, $old_foto, $tipe_file);
+}
+function UploadFotoLapak($fupload_name,$old_foto,$tipe_file="")
+{
+	$tipe_file = TipeFile($_FILES["foto"]);
+	$dimensi = array("width"=>200, "height"=>250);
+	if ($old_foto!="")
+	{
+		// Hapus old_foto
+		unlink(LOKASI_LAPAK_PICT.$old_foto);
+		$old_foto = "kecil_".$old_foto;
+	}
+	$nama_simpan = "kecil_".$fupload_name;
+	return UploadResizeImage(LOKASI_LAPAK_PICT, $dimensi, "foto", $fupload_name, $nama_simpan, $old_foto, $tipe_file);
 }
 
 function UploadGambar($fupload_name,$old_gambar)

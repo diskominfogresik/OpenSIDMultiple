@@ -172,13 +172,13 @@ class First extends Web_Controller
 		$this->load->view($this->template, $data);
 	}
 
-	public function home_lapak()
+	public function home_lapak($url)
 	{
 
 
 		$data = $this->includes;
-		$this->load->model('Lapak_model');
-		$data['lapak'] = $this->Lapak_model->get_data();
+		$this->load->model('lapak_model');
+		$data['lapak'] = $this->lapak_model->get_data();
 
 
 		$this->_get_common_data($data);

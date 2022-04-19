@@ -1,139 +1,139 @@
-<?php class Lapak_model extends CI_Model
-{
-
-	private $table = 'lapak';
-	public $id_lapak;
-	public $nama_lapak;
-	public $deskripsi;
-	public $foto_lapak = "default.jpg";
-	public $kontak_lapak;
-	public $lokasi_lapak;
-
-	public function __construct()
+	<?php
+	defined('BASEPATH') or exit('No direct script access allowed');
+	class lapak_model extends MY_Model
 	{
-		parent::__construct();
-		$this->load->model('keluarga_model');
-	}
+		
 
-	public function get_data()
-	{
-		return $this->db->get('lapak')->result();
-	}
+		private $table = 'lapak';
+		public $id_lapak;
+		public $nama_lapak;
+		public $deskripsi;
+		public $foto_lapak = "default.jpg";
+		public $kontak_lapak;
+		public $lokasi_lapak;
 
-	public function getById($id)
-	{
-		$this->db->where('id_lapak', $id);
-		$query = $this->db->get('lapak');
-		return $query->row();
-	}
-
-	public function getDataLapakDetail($id)
-	{
-		$this->db->where('id_lapak', $id);
-		$query = $this->db->get('lapak');
-		return $query->row();
-	}
-
-	public function cari($keyword = null)
-	{
-		$this->db->select('*');
-		$this->db->from('lapak');
-		if (!empty($keyword)) {
-			$this->db->like('nama_lapak', $keyword);
+		public function __construct()
+		{
+			parent::__construct();
+		
 		}
-		return $this->db->get()->result_array();
-	}
 
-	public function insert($data)
-	{
-		$post = $this->input->post();
-		$id_lapak = $post['id_lapak'];
-
-		// $foto = $post['foto'];
-		unset($data['file_foto']);
-		unset($data['old_foto']);
-		// $idku = $this->getById($data);
-		$this->db->insert('lapak', $data);
-		$idku = $this->db->insert_id();
-
-		// Upload foto dilakukan setelah ada id, karena nama foto berisi id pend
-		if ($foto = $this->upload_foto($idku))
-			$this->db->where('id_lapak', $id_lapak)->update('lapak', ['foto_lapak' => $foto]);
-	}
-
-
-
-	private function upload_foto($id)
-	{
-
-		$post = $this->input->post();
-		$foto = $post['foto'];
-		$old_foto = $post['old_foto'];
-		$nama_file = 'foto' . '-' . $id;
-
-
-		$nama_file = $nama_file . '.png';
-		$foto = str_replace('data:image/png;base64,', '', $foto);
-		$foto = base64_decode($foto, true);
-
-
-
-		file_put_contents(LOKASI_LAPAK_PICT . $nama_file, $foto);
-		// file_put_contents(LOKASI_LAPAK_PICT . 'kecil_' . $nama_file, $foto);
-
-
-
-		return $nama_file;
-	}
-
-	public function delete_all()
-	{
-		$this->session->success = 1;
-
-		$id_cb = $_POST['id_cb'];
-		foreach ($id_cb as $id_lapak) {
-			$this->delete($id_lapak, $semua = true);
+		public function get_data()
+		{
+			return $this->db->get('lapak')->result();
 		}
-	}
 
-	public function update()
-	{
-		$post = $this->input->post();
-		$this->nama_lapak = $post["nama_lapak"];
-		$this->kontak_lapak = $post["kontak_lapak"];
-		$this->lokasi_lapak = $post["lokasi_lapak"];
-		$this->deskripsi = $post["deskripsi"];
-		$this->foto_lapak = $post["foto_lapak"];
-		return $this->db->update($this->lapak, $this, array('id_lapak' => $post['id_lapak']));
-	}
+		public function getById($id)
+		{
+			$this->db->where('id_lapak', $id);
+		//	$query = $this->db->get('lapak');
+			return $this->db->get('lapak')->row_array();
+		}
+
+		
+		public function cari($keyword = null)
+		{
+			$this->db->select('*');
+			$this->db->from('lapak');
+			if (!empty($keyword)) {
+				$this->db->like('nama_lapak', $keyword);
+			}
+			return $this->db->get()->result_array();
+		}
+
+		public function insert($data)
+		{
+			$post = $this->input->post();
+		
+			unset($data['file_foto']);
+			unset($data['old_foto']);
+			
+			$this->db->insert('lapak', $data);
+			$idku = $this->db->insert_id();
+			// echo($idku); die;
+
+			// Upload foto dilakukan setelah ada id, karena nama foto berisi id lapak
+			if ($foto = $this->upload_foto($idku))
+				$this->db->where('id_lapak', $idku)->update('lapak', ['foto_lapak' => $foto]);
+		}
+
+		
+		public function update($data)
+		{
+			$post = $this->input->post();
+			$id = $post['id_lapak'];
+
+			
+
+			$data['foto_lapak'] = $this->upload_foto($id);
+			$this->db->where('id_lapak', $id)->update('lapak', $data);
+		}
+		
+		private function upload_foto($id)
+		{
+
+			$post = $this->input->post();
+			$foto = $post['foto'];
+			$old_foto = $post['old_foto'];
+			$nama_file = 'foto' . '-' . $id;
 
 
-	public function delete($id = '')
-	{
-		// if (!$semua) $this->session->success = 1;
+			if ($_FILES['foto']['tmp_name']) {
+				$nama_file = $nama_file . get_extension($_FILES['foto']['name']);
+				UploadFotoLapak($nama_file, $old_foto);
+			} elseif ($foto) {
+				$nama_file = $nama_file . '.png';
+				$foto = str_replace('data:image/png;base64,', '', $foto);
+				$foto = base64_decode($foto, true);
 
-		// Catat data penduduk yg di hapus di log_hapus_penduduk
-		// $penduduk_hapus = $this->getById($id);
-		// $log = [
-		// 	'id_pend' => $penduduk_hapus['id'],
-		// 	'nik' => $penduduk_hapus['nik'],
-		// 	'foto' => $penduduk_hapus['foto'],
-		// 	'deleted_by' => $this->session->user,
-		// 	'deleted_at' => date('Y-m-d H:i:s')
-		// ];
+				if ($old_foto != '') {
+					// Hapus old_foto
+					unlink(LOKASI_LAPAK_PICT . $old_foto);
+					unlink(LOKASI_LAPAK_PICT . 'kecil_' . $old_foto);
+				}
+
+				file_put_contents(LOKASI_LAPAK_PICT . $nama_file, $foto);
+				file_put_contents(LOKASI_LAPAK_PICT . 'kecil_' . $nama_file, $foto);
+			} else {
+				$nama_file = null;
+			}
+
+			return $nama_file;
+		}
+
+		public function delete_all()
+		{
+			
+
+			$id_cb = $_POST['id_cb'];
+			foreach ($id_cb as $id_lapak) {
+				$this->delete($id_lapak, $semua = true);
+			}
+		}
+		
 
 
+		public function delete($id)
+		{
+		
+			$lapak = $this->getById($id);
+			
+			$file_foto = LOKASI_LAPAK_PICT . $lapak['foto_lapak'];
+			// echo($file_foto); die;
+			if (is_file($file_foto)) {
+				unlink($file_foto);
+				//break;
+			}
+			
+
+			// Hapus file foto kecil lapak yg di hapus di folder desa/upload/LAPAK_pict
+			$file_foto_kecil = LOKASI_LAPAK_PICT . "kecil_" . $lapak['foto_lapak'];
+			if (is_file($file_foto_kecil)) {
+				unlink($file_foto_kecil);
+				//break;
+			}
 		$this->db->where('id_lapak', $id)->delete('lapak');
 
-		// status_sukses($outp, $gagal_saja = true); //Tampilkan Pesan
+			
+		}
 	}
-
-
-	// protected function search_sql() {
-	// 	if ($this->session->cari) {
-	// 		$cari=$this->session->cari;
-	// 		$cari=$this->db->escape_like_str($cari);
-	// 		$this->db ->group_start() ->like('u.nama', $cari) ->or_like('u.nik', $cari) ->or_like('u.tag_id_card', $cari) ->group_end();
-	// 	}
-	// }
-}
