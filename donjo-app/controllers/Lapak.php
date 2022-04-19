@@ -151,7 +151,7 @@
 
 
 
-    public function update($id)
+    public function update()
     {
         
         $id_lapak = $this->input->post("id_lapak", TRUE);
@@ -179,7 +179,7 @@
                 'koordinat' => $koordinat
             ];
 
-        // var_dump($ArrInsert); die;
+       // var_dump($ArrInsert); die;
         
         $this->lapak_model->update($ArrInsert);
         redirect(base_url('lapak'));

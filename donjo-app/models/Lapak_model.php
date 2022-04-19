@@ -66,6 +66,7 @@
 			
 
 			$data['foto_lapak'] = $this->upload_foto($id);
+		//	var_dump($data); die;
 			$this->db->where('id_lapak', $id)->update('lapak', $data);
 		}
 		
