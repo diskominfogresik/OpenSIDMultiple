@@ -69,10 +69,10 @@
                                     </div>
                                 </div>
                                 <div class="col-sm-4">
-                                    <div class="caption text-center" onclick="location.href='https://flow.microsoft.com/en-us/connectors/shared_slack/slack/'">
+                                    <div class="caption text-center">
                                         <div class="position-relative">
                                             <!-- <img src="https://az818438.vo.msecnd.net/icons/slack.png" style="width:72px;height:72px;" /> -->
-                                            <img src="https://az818438.vo.msecnd.net/icons/slack.png" />
+                                            <img src="<?php echo (base_url() . LOKASI_LAPAK_PICT . $row->foto_lapak); ?>" width="200px" height="200px" />
                                         </div>
                                     </div>
                                     <div class="card-body">
@@ -82,7 +82,7 @@
                                             <div class="btn-group">
                                                 <a class="btn btn-sm btn-success" href="https://api.whatsapp.com/send?phone=+62<?php echo $row->kontak_lapak ?>&amp;text=Silahkan ketik pesan anda" rel="noopener noreferrer" target="_blank" title="WhatsApp +628157985118"><i class="fa fa-whatsapp"></i> Pesan</a>
                                                 <a class="btn btn-sm btn-danger text-white" href="<?php echo $row->koordinat ?>" title="Titik Lokasi"><i class="fa fa-map"></i> Lokasi</a>
-                                                <a class="btn btn-sm btn-primary text-white" data-remote="false" data-toggle="modal" data-target="#exampleModal_<?php echo $row->id_lapak; ?> " title="Deskripsi"><i class="fa fa-info-circle"></i> Deskripsi</a>
+                                                <a class="btn btn-sm btn-primary text-white" data-remote="false" data-toggle="modal" data-target="#exampleModal_<?php echo $row->id_lapak; ?>" title="Deskripsi"><i class="fa fa-info-circle"></i> Deskripsi</a>
                                             </div>
                                         </div>
                                     </div>
