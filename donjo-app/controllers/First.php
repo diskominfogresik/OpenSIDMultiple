@@ -172,7 +172,7 @@ class First extends Web_Controller
 		$this->load->view($this->template, $data);
 	}
 
-	public function home_lapak($url)
+	public function home_lapak()
 	{
 
 
