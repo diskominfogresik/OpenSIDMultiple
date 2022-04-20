@@ -59,23 +59,28 @@ class Migrasi_fitur_kominfo_1 extends MY_model
       ),
       'deskripsi'=> array(
         'type'=> 'VARCHAR',
-        'constraint'=>'200'
+        'constraint'=>'200',
+        'null'=>true
       ),
       'kontak_lapak'=>array(
         'type'=>'VARCHAR',
-        'constraint'=>'14'
+        'constraint'=>'14',
+        'null'=>true
       ),
       'lokasi_lapak'=>array(
         'type'=>'VARCHAR',
-        'constraint'=>'50'
+        'constraint'=>'50',
+        'null'=>true
       ),
       'foto_lapak'=>array(
         'type'=>'VARCHAR',
-        'constraint'=>'100'
+        'constraint'=>'100',
+        'null'=>true
       ),
       'koordinat'=>array(
         'type'=>'VARCHAR',
-        'constraint'=>'100'
+        'constraint'=>'100',
+        'null'=>true
       )
     );
     $hasil =& $this->dbforge->add_field($fields);
