@@ -1,48 +1,3 @@
-<?php
-/**
- * File ini:
- *
- * Modul Header OpenSID
- *
- * /donjo-app/views/header.php
- *
- */
-
-/**
- *
- * File ini bagian dari:
- *
- * OpenSID
- *
- * Sistem informasi desa sumber terbuka untuk memajukan desa
- *
- * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
- *
- * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
- *
- * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
- * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
- * tanpa batasan, termasuk hak untuk menggunakan, menyalin, mengubah dan/atau mendistribusikan,
- * asal tunduk pada syarat berikut:
-
- * Pemberitahuan hak cipta di atas dan pemberitahuan izin ini harus disertakan dalam
- * setiap salinan atau bagian penting Aplikasi Ini. Barang siapa yang menghapus atau menghilangkan
- * pemberitahuan ini melanggar ketentuan lisensi Aplikasi Ini.
-
- * PERANGKAT LUNAK INI DISEDIAKAN "SEBAGAIMANA ADANYA", TANPA JAMINAN APA PUN, BAIK TERSURAT MAUPUN
- * TERSIRAT. PENULIS ATAU PEMEGANG HAK CIPTA SAMA SEKALI TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN ATAU
- * KEWAJIBAN APAPUN ATAS PENGGUNAAN ATAU LAINNYA TERKAIT APLIKASI INI.
- *
- * @package OpenSID
- * @author Tim Pengembang OpenDesa
- * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2020 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
- * @license http://www.gnu.org/licenses/gpl.html GPL V3
- * @link https://github.com/OpenSID/OpenSID
- */
-?>
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
@@ -50,13 +5,13 @@
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<title>
 			<?=$this->setting->admin_title
-				. ' ' . ucwords($this->setting->sebutan_desa)
-				. (($desa['nama_desa']) ? ' ' . $desa['nama_desa']: '')
-				. get_dynamic_title_page_from_path();
-			?>
+                . ' ' . ucwords($this->setting->sebutan_desa)
+                . (($desa['nama_desa']) ? ' ' . $desa['nama_desa'] : '')
+                . get_dynamic_title_page_from_path();
+            ?>
 		</title>
 		<meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
-		<?php if (is_file(LOKASI_LOGO_DESA . "favicon.ico")): ?>
+		<?php if (is_file(LOKASI_LOGO_DESA . 'favicon.ico')): ?>
 			<link rel="shortcut icon" href="<?= base_url()?><?= LOKASI_LOGO_DESA?>favicon.ico" />
 		<?php else: ?>
 			<link rel="shortcut icon" href="<?= base_url()?>favicon.ico" />
@@ -86,6 +41,10 @@
 		<!-- AdminLTE Skins. -->
 		<link rel="stylesheet" href="<?= base_url()?>assets/css/skins/_all-skins.min.css">
 		<!-- Style Admin Modification Css -->
+		<!-- Token Field -->
+		<?php if ($this->controller == 'bumindes_kader'): ?>
+			<link rel="stylesheet" href="<?= base_url('assets/bootstrap/css/bootstrap-tokenfield.min.css'); ?>">
+		<?php endif; ?>
 		<link rel="stylesheet" href="<?= base_url()?>assets/css/admin-style.css">
 		<!-- OpenStreetMap Css -->
 		<link rel="stylesheet" href="<?= base_url()?>assets/css/leaflet.css" />
@@ -98,9 +57,10 @@
 		<link rel="stylesheet" href="<?= base_url()?>assets/css/L.Control.Shapefile.css" />
 		<link rel="stylesheet" href="<?= base_url()?>assets/css/leaflet.groupedlayercontrol.min.css" />
 		<link rel="stylesheet" href="<?= base_url()?>assets/css/peta.css">
+		<link rel="stylesheet" href="<?= base_url()?>assets/css/toastr.min.css">
 
 		<!-- Untuk ubahan style desa -->
-		<?php if (is_file("desa/css/siteman.css")): ?>
+		<?php if (is_file('desa/css/siteman.css')): ?>
 			<link type='text/css' href="<?= base_url()?>desa/css/siteman.css" rel='Stylesheet' />
 		<?php endif; ?>
 		<!-- Diperlukan untuk script jquery khusus halaman -->
@@ -116,7 +76,7 @@
 		<script src="<?= base_url()?>assets/js/leaflet-providers.js"></script>
 		<script src="<?= base_url()?>assets/js/L.Control.Locate.min.js"></script>
 		<script src="<?= base_url()?>assets/js/leaflet.markercluster.js"></script>
-		<script src="<?= base_url()?>assets/js/peta.js"></script>
+		<script src="<?= base_url('assets/js/peta.js')?>"></script>
 		<script src="<?= base_url()?>assets/js/leaflet-measure-path.js"></script>
 		<script src="<?= base_url()?>assets/js/apbdes_manual.js"></script>
 		<script src="<?= base_url()?>assets/js/mapbox-gl.js"></script>
@@ -128,6 +88,7 @@
 		<script src="<?= base_url()?>assets/js/leaflet.browser.print.utils.js"></script>
 		<script src="<?= base_url()?>assets/js/leaflet.browser.print.sizes.js"></script>
 		<script src="<?= base_url()?>assets/js/dom-to-image.min.js"></script>
+		<script src="<?= base_url()?>assets/js/toastr.min.js"></script>
 
 		<!-- Diperlukan untuk global automatic base_url oleh external js file -->
 		<script type="text/javascript">
@@ -144,9 +105,9 @@
 		<script src="<?= base_url()?>assets/js/highcharts/organization.js"></script>
 		<script src="<?= base_url()?>assets/js/highcharts/accessibility.js"></script>
 
-		<?php require __DIR__ .'/head_tags.php' ?>
+		<?php require __DIR__ . '/head_tags.php' ?>
 	</head>
-	<body class="<?= $this->setting->warna_tema_admin; ?> sidebar-mini fixed <?php if ($minsidebar==1): ?>sidebar-collapse<?php endif ?>">
+	<body id="sidebar_collapse" class="<?= $this->setting->warna_tema_admin; ?> sidebar-mini fixed">
 		<div class="wrapper">
 			<header class="main-header">
 				<a href="<?= site_url(); ?>" target="_blank" class="logo">
@@ -159,13 +120,6 @@
 					</a>
 					<div class="navbar-custom-menu">
 						<ul class="nav navbar-nav">
-							<?php if (ENVIRONMENT == 'development'): ?>
-								<li>
-									<a>
-										<i class="fa fa-cog fa-lg" title="Development"></i><span class="badge">Development</span>
-									</a>
-								</li>
-							<?php endif; ?>
 							<?php if ($notif_langganan): ?>
 								<li>
 									<a href="<?= site_url('pelanggan'); ?>">
@@ -215,13 +169,13 @@
 									<li class="user-header">
 										<img src="<?= AmbilFoto($foto); ?>" class="img-circle" alt="User Image"/>
 										<p>
-											Anda Login Sebagai
-											<strong><?=$nama?></strong>
+											<small>Anda Masuk Sebagai</small>
+											<?= $nama; ?>
 										</p>
 									</li>
 									<li class="user-footer">
 										<div class="pull-left">
-											<a href="<?= site_url('user_setting'); ?>" data-remote="false" data-toggle="modal" data-tittle="Pengaturan Pengguna" data-target="#modalBox" class="btn bg-maroon btn-flat btn-sm">Profil</a>
+											<a href="<?= site_url('user_setting'); ?>" data-remote="false" data-toggle="modal" data-title="Pengaturan Pengguna" data-target="#modalBox" class="btn bg-maroon btn-flat btn-sm">Profil</a>
 										</div>
 										<div class="pull-right">
 											<a href="<?= site_url('siteman/logout'); ?>" class="btn bg-maroon btn-flat btn-sm">Keluar</a>
@@ -243,11 +197,11 @@
 			<input id="success-code" type="hidden" value="<?= $_SESSION['success']?>">
 			<!-- Untuk menampilkan modal bootstrap umum -->
 			<div class="modal fade" id="modalBox" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-				<div class='modal-dialog'>
-					<div class='modal-content'>
-						<div class='modal-header'>
-							<button type='button' class='close' data-dismiss='modal' aria-hidden='true'>&times;</button>
-							<h4 class='modal-title' id='myModalLabel'> Pengaturan Pengguna</h4>
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<div class="modal-header">
+							<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+							<h4 class="modal-title" id="myModalLabel"></h4>
 						</div>
 						<div class="fetched-data"></div>
 					</div>
@@ -263,7 +217,7 @@
 								<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
 								<h4 class="modal-title" id="myModalLabel"> Pengaturan <?= ucwords($this->controller); ?></h4>
 							</div>
-							<?php $this->load->view("global/modal_setting", ['kategori' => [$this->controller]]); ?>
+							<?php $this->load->view('global/modal_setting', ['kategori' => [$this->controller]]); ?>
 						</div>
 					</div>
 				</div>

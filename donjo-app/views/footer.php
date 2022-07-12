@@ -1,9 +1,10 @@
-			<footer class="main-footer">
-				<div class="pull-right hidden-xs">
-			  	<b>Versi</b> <?= AmbilVersi()?>
-				</div>
-				<strong>Aplikasi <a href="https://github.com/OpenSID/OpenSID" target="_blank"> OpenSID</a>, dikembangkan oleh <a href="https://www.facebook.com/groups/OpenSID/" target="_blank">Komunitas OpenSID</a>.</strong>
-			</footer>
+				<footer class="main-footer">
+					<div class="pull-right hidden-xs">
+						<b>Versi</b> <?= AmbilVersi()?>
+					</div>
+					<strong>Aplikasi <a href="https://github.com/OpenSID/OpenSID" target="_blank"> OpenSID</a>, dikembangkan oleh <a href="https://www.facebook.com/groups/OpenSID/" target="_blank">Komunitas OpenSID</a>.</strong>
+				</footer>
+			</div>
 		</div>
 
 		<!-- jQuery 3 -->
@@ -46,40 +47,39 @@
 		<script src="<?= base_url('assets/js/custom-select2.js'); ?>"></script>
 		<script src="<?= base_url('assets/js/custom-datetimepicker.js'); ?>"></script>
 
+		<!-- Token Field -->
+		<?php if ($this->controller == 'bumindes_kader'): ?>
+			<script src="<?= base_url('assets/bootstrap/js/bootstrap-tokenfield.min.js'); ?>"></script>
+		<?php endif; ?>
+
+
 		<!-- NOTIFICATION-->
 		<script type="text/javascript">
 
-			$('document').ready(function()
-			{
-				if ($('#success-code').val() == 1)
-				{
+			$('document').ready(function() {
+				if ($('#success-code').val() == 1) {
 					notify = 'success';
 					notify_msg = 'Data berhasil disimpan';
-				}
-				else if ($('#success-code').val() == -1)
-				{
+				} else if ($('#success-code').val() == -1) {
 					notify = 'error';
-					notify_msg = 'Data gagal disimpan <?= $_SESSION["error_msg"]?>';
-				}
-				else if ($('#success-code').val() == -2)
-				{
+					notify_msg = 'Data gagal disimpan <?= addslashes($this->session->error_msg) ?>';
+				} else if ($('#success-code').val() == -2) {
 					notify = 'error';
 					notify_msg = 'Data gagal disimpan, nama id sudah ada!';
-				}
-				else if ($('#success-code').val() == -3)
-				{
+				} else if ($('#success-code').val() == -3) {
 					notify = 'error';
 					notify_msg = 'Data gagal disimpan, nama id sudah ada!';
-				}
-				else if ($('#success-code').val() == 4)
-				{
+				} else if ($('#success-code').val() == 4) {
 					notify = 'success';
 					notify_msg = 'Data berhasil dihapus';
-				}
-				else if ($('#success-code').val() == -4)
-				{
+				} else if ($('#success-code').val() == -4) {
 					notify = 'error';
 					notify_msg = 'Data gagal dihapus';
+				}
+				else if ($('#success-code').val() == 5)
+				{
+					notify = 'success';
+					notify_msg = 'Data berhasil diunggah';
 				}
 				else
 				{
@@ -88,9 +88,18 @@
 				}
 				notification(notify, notify_msg);
 				$('#success-code').val('');
+
+				// Sidebar
+				if (typeof (Storage) !== 'undefined' && localStorage.getItem('sidebar') === 'false') {
+					$("#sidebar_collapse").addClass('sidebar-collapse');
+				}
+
+				$('.sidebar-toggle').on('click', function() {
+					localStorage.setItem('sidebar', $("#sidebar_collapse").hasClass('sidebar-collapse'));
+				});
 			});
 		</script>
-		<?php $_SESSION['success']=0; ?>
+		<?php $_SESSION['success'] = 0; ?>
 	</body>
 </html>
 
