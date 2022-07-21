@@ -75,7 +75,7 @@ class Surat extends Admin_Controller
     {
         $data['url']    = $url;
         $data['anchor'] = $this->input->post('anchor');
-        if (! empty($_POST['nik'])) {
+        if (!empty($_POST['nik'])) {
             $data['individu'] = $this->surat_model->get_penduduk($_POST['nik']);
             $data['anggota']  = $this->keluarga_model->list_anggota($data['individu']['id_kk'], ['dengan_kk' => true], true);
         } else {
@@ -94,8 +94,14 @@ class Surat extends Admin_Controller
     public function periksa_doc($id, $url)
     {
         // Ganti status menjadi 'Menunggu Tandatangan'
+        // MYB
+        // $this->permohonan_surat_model->proses($id, 2);
+        // $this->cetak_doc($url);
+
+        // MYB
+        // MYB : temporary disable update status, buat nyoba pdf
         $this->permohonan_surat_model->proses($id, 2);
-        $this->cetak_doc($url);
+        $this->cetak_doc($url, $id);
     }
 
     public function doc($url = '')
@@ -105,7 +111,9 @@ class Surat extends Admin_Controller
         $this->load->config('develbar', true);
     }
 
-    private function cetak_doc($url)
+    // MYB
+    // private function cetak_doc($url)
+    private function cetak_doc($url, $idPermohonanSurat = 0)
     {
         $format                 = $this->surat_model->get_surat($url);
         $log_surat['url_surat'] = $format['id'];
@@ -119,30 +127,30 @@ class Surat extends Admin_Controller
         switch ($url) {
             case 'surat_ket_kelahiran':
                 // surat_ket_kelahiran id-nya ibu atau bayi
-                if (! $id) {
+                if (!$id) {
                     $id = $_SESSION['id_ibu'];
                 }
-                if (! $id) {
+                if (!$id) {
                     $id = $_SESSION['id_bayi'];
                 }
                 break;
 
             case 'surat_ket_nikah':
                 // id-nya calon pasangan pria atau wanita
-                if (! $id) {
+                if (!$id) {
                     $id = $_POST['id_pria'];
                 }
-                if (! $id) {
+                if (!$id) {
                     $id = $_POST['id_wanita'];
                 }
                 break;
 
             case 'surat_kuasa':
                 // id-nya pemberi kuasa atau penerima kuasa
-                if (! $id) {
+                if (!$id) {
                     $id = $_POST['id_pemberi_kuasa'];
                 }
-                if (! $id) {
+                if (!$id) {
                     $id = $_POST['id_penerima_kuasa'];
                 }
                 break;
@@ -164,6 +172,12 @@ class Surat extends Admin_Controller
         }
 
         $log_surat['keterangan'] = $keterangan ?: $keperluan;
+
+        //MYB
+        if ($idPermohonanSurat > 0) {
+            $log_surat['keterangan'] = '' ? $idPermohonanSurat . '_' : $idPermohonanSurat . '_' . $log_surat['keterangan'];
+        }
+
         $nama_surat              = $this->keluar_model->nama_surat_arsip($url, $nik, $_POST['nomor']);
         $log_surat['nama_surat'] = $nama_surat;
         if ($format['lampiran']) {
@@ -178,7 +192,6 @@ class Surat extends Admin_Controller
         } else {
             $nama_surat = pathinfo($nama_surat, PATHINFO_FILENAME) . '.rtf';
         }
-
         if ($lampiran) {
             // TO DO : Gunakan library CI3
             $nama_file    = pathinfo($nama_surat, PATHINFO_FILENAME) . '.zip';

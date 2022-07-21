@@ -1,5 +1,4 @@
 <?php
-
 /*
  *
  * File ini bagian dari:

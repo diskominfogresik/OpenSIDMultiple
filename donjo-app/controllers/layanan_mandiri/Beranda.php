@@ -1,6 +1,5 @@
 <?php
-
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') or exit('No direct script access allowed');
 
 /**
  * File ini:
@@ -65,7 +64,7 @@ class Beranda extends Mandiri_Controller
 		];
 
 		$this->load->view('layanan_mandiri/template', $data);
-		*/
+		 */
 
 		$this->profil();
 	}
@@ -93,10 +92,9 @@ class Beranda extends Mandiri_Controller
 		$this->load->view('sid/kependudukan/cetak_biodata', $data);
 	}
 
-	public function cetak_kk() 
+	public function cetak_kk()
 	{
-		if ($this->is_login->id_kk == 0)
-		{
+		if ($this->is_login->id_kk == 0) {
 			// Jika diakses melalui URL
 			$respon = [
 				'status' => 1,
@@ -151,5 +149,4 @@ class Beranda extends Mandiri_Controller
 		else
 			$this->output->set_status_header('404');
 	}
-
 }

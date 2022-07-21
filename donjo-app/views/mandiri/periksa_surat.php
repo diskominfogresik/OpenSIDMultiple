@@ -14,8 +14,8 @@
 	<section class="content-header">
 		<h1>Permohonan Surat</h1>
 		<ol class="breadcrumb">
-			<li><a href="<?= site_url('hom_sid')?>"><i class="fa fa-home"></i> Home</a></li>
-			<li><a href="<?= site_url('permohonan_surat_admin/index/1/0')?>"> Daftar Permohonan Surat</a></li>
+			<li><a href="<?= site_url('hom_sid') ?>"><i class="fa fa-home"></i> Home</a></li>
+			<li><a href="<?= site_url('permohonan_surat_admin/index/1/0') ?>"> Daftar Permohonan Surat</a></li>
 			<li class="active">Surat Keterangan</li>
 		</ol>
 	</section>
@@ -43,7 +43,7 @@
 							<div class="form-group">
 								<label class="control-label col-sm-3">No HP Aktif</label>
 								<div class="col-sm-9">
-									<input class="form-control input-sm" readonly="readonly" value="<?= $periksa['no_hp_aktif']?>">
+									<input class="form-control input-sm" readonly="readonly" value="<?= $periksa['no_hp_aktif'] ?>">
 								</div>
 							</div>
 						</form>
@@ -64,21 +64,21 @@
 									</tr>
 								</thead>
 								<tbody>
-									<?php if ($syarat_permohonan): ?>
-										<?php foreach ($syarat_permohonan as $key => $syarat): ?>
+									<?php if ($syarat_permohonan) : ?>
+										<?php foreach ($syarat_permohonan as $key => $syarat) : ?>
 											<tr>
 												<td class="padat"><?= ($key + 1); ?></td>
 												<td><?= $syarat['ref_syarat_nama']; ?></td>
 												<td class="padat">
-													<?php if ($syarat['dok_id'] == '-1'): ?>
+													<?php if ($syarat['dok_id'] == '-1') : ?>
 														<strong class="text-red"><i class="fa fa-exclamation-triangle text-red"></i>Bawa bukti fisik ke Kantor Desa</strong>
-													<?php else: ?>
+													<?php else : ?>
 														<a href="<?= site_url("permohonan_surat_admin/tampilkan/{$syarat['dok_id']}/{$periksa['id_pemohon']}"); ?>" class="btn btn-social btn-flat btn-info btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Tampilkan" data-target="#modalBox" data-remote="false" data-toggle="modal" data-backdrop="false" data-keyboard="false" data-title="Tampilkan Dokumen"><i class="fa fa-eye"></i> Cek Dokumen</a>
 													<?php endif; ?>
 												</td>
 											</tr>
 										<?php endforeach; ?>
-									<?php else: ?>
+									<?php else : ?>
 										<tr>
 											<td class="text-center" colspan="9">Data Tidak Tersedia</td>
 										</tr>
@@ -124,7 +124,7 @@
 				</div>
 			</div>
 
-			<textarea id="isian_form" hidden="hidden"><?= $isian_form?></textarea>
+			<textarea id="isian_form" hidden="hidden"><?= $isian_form ?></textarea>
 
 		</div>
 	</section>
@@ -142,7 +142,9 @@
 	$(document).ready(function() {
 		// Di form surat ubah isian admin menjadi disabled
 		$("#periksa-permohonan .readonly-periksa").attr('disabled', true);
-		setTimeout(function() {isi_form();}, 100);
+		setTimeout(function() {
+			isi_form();
+		}, 100);
 	});
 
 	function isi_form() {
@@ -154,8 +156,7 @@
 				elem.val(value);
 				elem.change();
 				// Kalau isian hidden, akan ada isian lain untuk menampilkan datanya
-				if (elem.is(":hidden"))
-				{
+				if (elem.is(":hidden")) {
 					var show = $('#' + key + '_show');
 					show.val(value);
 					show.change();

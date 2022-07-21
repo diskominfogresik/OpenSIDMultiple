@@ -67,9 +67,7 @@ class Surat_model extends CI_Model
 
     public function list_surat2()
     {
-        $data = $this->db->where('kunci', 0)->
-            get('tweb_surat_format')->
-            result_array();
+        $data = $this->db->where('kunci', 0)->get('tweb_surat_format')->result_array();
 
         for ($i = 0; $i < count($data); $i++) {
             $data[$i]['nama_lampiran'] = $this->nama_lampiran($data[$i]['lampiran']);
@@ -80,10 +78,7 @@ class Surat_model extends CI_Model
 
     public function list_surat_mandiri()
     {
-        $data = $this->db->where('kunci', 0)->
-            where('mandiri', 1)->
-            get('tweb_surat_format')->
-            result_array();
+        $data = $this->db->where('kunci', 0)->where('mandiri', 1)->get('tweb_surat_format')->result_array();
 
         for ($i = 0; $i < count($data); $i++) {
             $data[$i]['nama_lampiran'] = $this->nama_lampiran($data[$i]['lampiran']);
@@ -94,10 +89,7 @@ class Surat_model extends CI_Model
 
     public function list_surat_fav()
     {
-        $data = $this->db->where('kunci', 0)->
-            where('favorit', 1)->
-            get('tweb_surat_format')->
-            result_array();
+        $data = $this->db->where('kunci', 0)->where('favorit', 1)->get('tweb_surat_format')->result_array();
 
         for ($i = 0; $i < count($data); $i++) {
             $data[$i]['nama_lampiran'] = $this->nama_lampiran($data[$i]['lampiran']);
@@ -319,7 +311,7 @@ class Surat_model extends CI_Model
         $data  = $query->result_array();
 
         for ($i = 0; $i < count($data); $i++) {
-            if (! empty($data[$i]['id_pend'])) {
+            if (!empty($data[$i]['id_pend'])) {
                 // Dari database penduduk
                 $data[$i]['pamong_nama'] = $data[$i]['nama'];
             }
@@ -366,9 +358,11 @@ class Surat_model extends CI_Model
     public function format_data_surat(&$data)
     {
         // Asumsi kolom "alamat_wilayah" sdh dalam format ucwords
-        $kolomUpper = ['tanggallahir', 'tempatlahir', 'dusun', 'pekerjaan', 'gol_darah', 'agama', 'sex',
+        $kolomUpper = [
+            'tanggallahir', 'tempatlahir', 'dusun', 'pekerjaan', 'gol_darah', 'agama', 'sex',
             'status_kawin', 'pendidikan', 'hubungan', 'nama_ayah', 'nama_ibu', 'alamat', 'alamat_sebelumnya',
-            'cacat', ];
+            'cacat',
+        ];
 
         foreach ($kolomUpper as $kolom) {
             if (isset($data[$kolom])) {
@@ -491,9 +485,9 @@ class Surat_model extends CI_Model
                 ->where('u.id_kk', $id_kk)
                 ->where('u.sex', 1)
                 ->group_start()
-                    // Kepala Keluarga
+                // Kepala Keluarga
                 ->where('u.kk_level', 1)
-                    // Suami dari ibu
+                // Suami dari ibu
                 ->or_group_start()
                 ->where('u.kk_level', 2)
                 ->group_end()
@@ -503,7 +497,7 @@ class Surat_model extends CI_Model
         }
 
         // jika tidak ada Cari berdasarkan ayah_nik
-        if (empty($data['id']) && ! empty($penduduk['ayah_nik'])) {
+        if (empty($data['id']) && !empty($penduduk['ayah_nik'])) {
             $sql = 'SELECT u.id
 				FROM tweb_penduduk u
 				WHERE u.nik = ? limit 1';
@@ -536,9 +530,9 @@ class Surat_model extends CI_Model
                 ->from('tweb_penduduk u')
                 ->where('u.id_kk', $id_kk)
                 ->group_start()
-                    // istri
+                // istri
                 ->where('u.kk_level', 3)
-                    // kepala keluarga perempuan
+                // kepala keluarga perempuan
                 ->or_group_start()
                 ->where('u.kk_level', 1)
                 ->where('u.sex', 2)
@@ -549,7 +543,7 @@ class Surat_model extends CI_Model
         }
 
         // Cari berdasarkan ibu_nik
-        if (empty($data['id']) && ! empty($penduduk['ibu_nik'])) {
+        if (empty($data['id']) && !empty($penduduk['ibu_nik'])) {
             $data = $this->db
                 ->select('u.id')
                 ->from('tweb_penduduk u')
@@ -595,35 +589,35 @@ class Surat_model extends CI_Model
 
         while ($in < strlen($buffer_in)) {
             switch ($buffer_in[$in]) {
-          case '[':
-            // Ambil kode isian, hilangkan karakter bukan alpha
-            $kode_isian = $buffer_in[$in];
-            $in++;
+                case '[':
+                    // Ambil kode isian, hilangkan karakter bukan alpha
+                    $kode_isian = $buffer_in[$in];
+                    $in++;
 
-            while ($buffer_in[$in] != ']' && $in < strlen($buffer_in)) {
-                $kode_isian .= $buffer_in[$in];
-                $in++;
-            }
-            if ($in < strlen($buffer_in)) {
-                $kode_isian .= $buffer_in[$in];
-                $in++;
-            }
-            // Ganti karakter non-alphanumerik supaya bisa di-cek
-            $kode_isian = preg_replace('/[^a-zA-Z0-9,_\{\}\[\]\-]/', '#', $kode_isian);
-            // Regex ini untuk membersihkan kode isian dari karakter yang dimasukkan oleh Word
-            // Regex ini disusun berdasarkan RTF yang dihasilkan oleh Word 2011 di Mac.
-            // Perlu diverifikasi regex ini berlaku juga untuk RTF yang dihasilkan oleh versi Word lain.
-            $regex      = '/(\\}.?#)|rtlch.?#|cf\\d#|fcs.?#+|afs.?\\d#+|f\\d*?\\d#|fs\\d*?\\d#|af\\d*?\\d#+|ltrch#+|insrsid\\d*?\\d#+|alang\\d+#+|lang\\d+|langfe\\d+|langnp\\d+|langfenp\\d+|b#+|ul#+|hich#+|dbch#+|loch#+|charrsid\\d*?\\d#+|#+/';
-            $kode_isian = preg_replace($regex, '', $kode_isian);
-            $buffer_out .= $kode_isian;
-            break;
+                    while ($buffer_in[$in] != ']' && $in < strlen($buffer_in)) {
+                        $kode_isian .= $buffer_in[$in];
+                        $in++;
+                    }
+                    if ($in < strlen($buffer_in)) {
+                        $kode_isian .= $buffer_in[$in];
+                        $in++;
+                    }
+                    // Ganti karakter non-alphanumerik supaya bisa di-cek
+                    $kode_isian = preg_replace('/[^a-zA-Z0-9,_\{\}\[\]\-]/', '#', $kode_isian);
+                    // Regex ini untuk membersihkan kode isian dari karakter yang dimasukkan oleh Word
+                    // Regex ini disusun berdasarkan RTF yang dihasilkan oleh Word 2011 di Mac.
+                    // Perlu diverifikasi regex ini berlaku juga untuk RTF yang dihasilkan oleh versi Word lain.
+                    $regex      = '/(\\}.?#)|rtlch.?#|cf\\d#|fcs.?#+|afs.?\\d#+|f\\d*?\\d#|fs\\d*?\\d#|af\\d*?\\d#+|ltrch#+|insrsid\\d*?\\d#+|alang\\d+#+|lang\\d+|langfe\\d+|langnp\\d+|langfenp\\d+|b#+|ul#+|hich#+|dbch#+|loch#+|charrsid\\d*?\\d#+|#+/';
+                    $kode_isian = preg_replace($regex, '', $kode_isian);
+                    $buffer_out .= $kode_isian;
+                    break;
 
-          default:
-            // Ambil isi yang bukan bagian dari kode isian
-            $buffer_out .= $buffer_in[$in];
-            $in++;
-            break;
-        }
+                default:
+                    // Ambil isi yang bukan bagian dari kode isian
+                    $buffer_out .= $buffer_in[$in];
+                    $in++;
+                    break;
+            }
         }
 
         return $buffer_out;
@@ -639,8 +633,8 @@ class Surat_model extends CI_Model
     private function sisipkan_logo($nama_logo, $buffer)
     {
         //$file_logo = APPPATH . '../' . LOKASI_LOGO_DESA . $nama_logo;
-	$file_logo = FCPATH . LOKASI_LOGO_DESA . $nama_logo;
-        if (! is_file($file_logo)) {
+        $file_logo = FCPATH . LOKASI_LOGO_DESA . $nama_logo;
+        if (!is_file($file_logo)) {
             return $buffer;
         }
         // Akhiran dan awalan agak panjang supaya unik
@@ -675,11 +669,11 @@ class Surat_model extends CI_Model
         $tampil_foto = $input['tampil_foto'];
         if ($tampil_foto) {
             //$file_foto = APPPATH . '../' . LOKASI_USER_PICT . $nama_foto;
-	    $file_foto = FCPATH . LOKASI_USER_PICT . $nama_foto;
+            $file_foto = FCPATH . LOKASI_USER_PICT . $nama_foto;
         } else {
             $file_foto = APPPATH . '../' . LOKASI_SISIPAN_DOKUMEN . $nama_foto;
         }
-        if (! is_file($file_foto)) {
+        if (!is_file($file_foto)) {
             return $buffer;
         }
         $akhiran_foto      = 'afbe45630000000049454e44ae426082';
@@ -733,7 +727,7 @@ class Surat_model extends CI_Model
     private function lokasi_komponen($nama_surat, $komponen)
     {
         $lokasi = LOKASI_SURAT_DESA . $nama_surat . '/' . $komponen;
-        if ($this->surat['jenis'] == 1 && ! is_file($lokasi)) {
+        if ($this->surat['jenis'] == 1 && !is_file($lokasi)) {
             $lokasi = "template-surat/{$nama_surat}/{$komponen}";
         }
 
@@ -791,7 +785,7 @@ class Surat_model extends CI_Model
         $this->load->model('pamong_model');
         $pamong_ttd = $this->pamong_model->get_ttd();
         $atas_nama  = '';
-        if (! empty($input['pilih_atas_nama'])) {
+        if (!empty($input['pilih_atas_nama'])) {
             $atas_nama = 'a.n ' . ucwords($pamong_ttd['jabatan'] . ' ' . $config['nama_desa']);
             if (strpos($input['pilih_atas_nama'], 'u.b') !== false) {
                 $pamong_ub = $this->pamong_model->get_ub();
@@ -811,7 +805,9 @@ class Surat_model extends CI_Model
         return str_replace('\par', '<br>', $this->atas_nama($data));
     }
 
-    public function surat_rtf($data)
+    // MYB
+    // public function surat_rtf($data)
+    public function surat_rtf($data, $isAddBssnFootnote = false)
     {
         $this->load->library('date_conv');
         // Ambil data
@@ -884,13 +880,16 @@ class Surat_model extends CI_Model
             $buffer = $this->case_replace('[sebutan_desa]', $this->setting->sebutan_desa, $buffer);
             $buffer = $this->case_replace('[sebutan_dusun]', $this->setting->sebutan_dusun, $buffer);
             $buffer = $this->case_replace('[sebutan_camat]', $this->setting->sebutan_camat, $buffer);
-            if (! empty($config['email_desa'])) {
+            if (!empty($config['email_desa'])) {
                 $alamat_desa  = "{$config['alamat_kantor']} Email: {$config['email_desa']} Kode Pos: {$config['kode_pos']}";
                 $alamat_surat = "{$config['alamat_kantor']} Telp. {$config['telepon']} Kode Pos: {$config['kode_pos']} \\par Website: {$config['website']} Email: {$config['email_desa']}";
             } else {
                 $alamat_desa  = "{$config['alamat_kantor']} Kode Pos: {$config['kode_pos']}";
                 $alamat_surat = "{$config['alamat_kantor']} Telp. {$config['telepon']} Kode Pos: {$config['kode_pos']}";
             }
+
+            // MYB
+            /*
             $array_replace = [
                 '[alamat_des]'        => $alamat_desa,
                 '[alamat_desa]'       => $alamat_desa,
@@ -916,6 +915,65 @@ class Surat_model extends CI_Model
                 '[telepon_desa]'      => $config['telepon'],
                 '[website_desa]'      => $config['website'],
             ];
+            */
+
+            // MYB
+            if ($isAddBssnFootnote) {
+                $array_replace = [
+                    '[alamat_des]'        => $alamat_desa,
+                    '[alamat_desa]'       => $alamat_desa,
+                    '[alamat_surat]'      => $alamat_surat,
+                    '[alamat_kantor]'     => $config['alamat_kantor'],
+                    '[email_desa]'        => $config['email_desa'],
+                    '[kode_desa]'         => $config['kode_desa'],
+                    '[kode_kecamatan]'    => $config['kode_kecamatan'],
+                    '[kode_kabupaten]'    => $config['kode_kabupaten'],
+                    '[kode_pos]'          => $config['kode_pos'],
+                    '[kode_provinsi]'     => $config['kode_propinsi'],
+                    '[nama_des]'          => $config['nama_desa'],
+                    '[nama_kab]'          => ucwords(strtolower($config['nama_kabupaten'])),
+                    '[nama_kabupaten]'    => $config['nama_kabupaten'],
+                    '[nama_kec]'          => $config['nama_kecamatan'],
+                    '[nama_kecamatan]'    => $config['nama_kecamatan'],
+                    '[nama_provinsi]'     => ucwords(strtolower($config['nama_propinsi'])),
+                    '[nama_kepala_camat]' => $config['nama_kepala_camat'],
+                    '[nama_kepala_desa]'  => $config['nama_kepala_desa'],
+                    '[nip_kepala_camat]'  => $config['nip_kepala_camat'],
+                    '[nip_kepala_desa]'   => $config['nip_kepala_desa'],
+                    '[pos]'               => $config['kode_pos'],
+                    '[telepon_desa]'      => $config['telepon'],
+                    '[website_desa]'      => $config['website'],
+                    MYB_BSSN_FOOTNOTE_LABEL => MYB_BSSN_FOOTNOTE,
+                ];
+            } else {
+                $array_replace = [
+                    '[alamat_des]'        => $alamat_desa,
+                    '[alamat_desa]'       => $alamat_desa,
+                    '[alamat_surat]'      => $alamat_surat,
+                    '[alamat_kantor]'     => $config['alamat_kantor'],
+                    '[email_desa]'        => $config['email_desa'],
+                    '[kode_desa]'         => $config['kode_desa'],
+                    '[kode_kecamatan]'    => $config['kode_kecamatan'],
+                    '[kode_kabupaten]'    => $config['kode_kabupaten'],
+                    '[kode_pos]'          => $config['kode_pos'],
+                    '[kode_provinsi]'     => $config['kode_propinsi'],
+                    '[nama_des]'          => $config['nama_desa'],
+                    '[nama_kab]'          => ucwords(strtolower($config['nama_kabupaten'])),
+                    '[nama_kabupaten]'    => $config['nama_kabupaten'],
+                    '[nama_kec]'          => $config['nama_kecamatan'],
+                    '[nama_kecamatan]'    => $config['nama_kecamatan'],
+                    '[nama_provinsi]'     => ucwords(strtolower($config['nama_propinsi'])),
+                    '[nama_kepala_camat]' => $config['nama_kepala_camat'],
+                    '[nama_kepala_desa]'  => $config['nama_kepala_desa'],
+                    '[nip_kepala_camat]'  => $config['nip_kepala_camat'],
+                    '[nip_kepala_desa]'   => $config['nip_kepala_desa'],
+                    '[pos]'               => $config['kode_pos'],
+                    '[telepon_desa]'      => $config['telepon'],
+                    '[website_desa]'      => $config['website'],
+                    MYB_BSSN_FOOTNOTE_LABEL => '',
+                ];
+            }
+
             $buffer = str_replace(array_keys($array_replace), array_values($array_replace), $buffer);
 
             //DATA DARI TABEL PENDUDUK
@@ -1001,7 +1059,8 @@ class Surat_model extends CI_Model
             }
             // $input adalah isian form surat. Kode isian dari form bisa berbentuk [form_isian]
             // sesuai dengan panduan, atau boleh juga langsung [isian] saja
-            $isian_tanggal = ['berlaku_dari', 'berlaku_sampai', 'tanggal', 'tgl_meninggal',
+            $isian_tanggal = [
+                'berlaku_dari', 'berlaku_sampai', 'tanggal', 'tgl_meninggal',
                 'tanggal_lahir', 'tanggallahir_istri', 'tanggallahir_suami', 'tanggal_mati',
                 'tanggallahir_pasangan', 'tgl_lahir_ayah', 'tgl_lahir_ibu', 'tgl_berakhir_paspor',
                 'tgl_akte_perkawinan', 'tgl_perceraian', 'tanggallahir', 'tanggallahir_pelapor', 'tgl_lahir',
@@ -1023,7 +1082,7 @@ class Surat_model extends CI_Model
                         $buffer = preg_replace("/\\[{$key}\\]|\\[form_{$key}\\]/", (strlen($entry) > 10 ? tgl_indo2(tgl_indo_in($entry)) : tgl_indo_dari_str($entry)), $buffer);
                     }
                 }
-                if (! is_array($entry)) {
+                if (!is_array($entry)) {
                     $buffer = str_replace("[form_{$key}]", $entry, $buffer);
                     // Diletakkan di bagian akhir karena bisa sama dengan kode isian sebelumnya
                     // dan kalau masih ada dianggap sebagai kode dari form isian
@@ -1053,7 +1112,7 @@ class Surat_model extends CI_Model
     private function get_file_data_lampiran($url_surat, $lokasi_rtf)
     {
         $file = FCPATH . $lokasi_rtf . 'get_data_lampiran.php';
-        if (! file_exists($file)) {
+        if (!file_exists($file)) {
             $file = FCPATH . 'template-surat/' . $url_surat . '/get_data_lampiran.php';
         }
 
@@ -1063,7 +1122,7 @@ class Surat_model extends CI_Model
     private function get_file_lampiran($url_surat, $lokasi_rtf, $format_lampiran)
     {
         $file = FCPATH . $lokasi_rtf . $format_lampiran;
-        if (! file_exists($file)) {
+        if (!file_exists($file)) {
             $file = FCPATH . 'template-surat/' . $url_surat . '/' . $format_lampiran;
         }
 
@@ -1073,7 +1132,7 @@ class Surat_model extends CI_Model
     public function lampiran($data, $nama_surat, &$lampiran)
     {
         $surat = $data['surat'];
-        if (! $surat['lampiran']) {
+        if (!$surat['lampiran']) {
             return;
         }
 
@@ -1146,7 +1205,15 @@ class Surat_model extends CI_Model
         $handle       = fopen($berkas_arsip, 'w+b');
         fwrite($handle, $rtf);
         fclose($handle);
-        if (! empty($this->setting->libreoffice_path)) {
+
+        // MYB, create rtf dengan footnote
+        $rtf = $this->surat_rtf($data, true);
+        $rtf_fs = explode('.', $berkas_arsip)[0] . MYB_SUFFIX_FS . '.rtf';
+        $handle = fopen($rtf_fs, 'w+');
+        fwrite($handle, $rtf);
+        fclose($handle);
+
+        if (!empty($this->setting->libreoffice_path)) {
             // Untuk konversi rtf ke pdf, libreoffice harus terinstall
             if (strpos(strtoupper(php_uname('s')), 'WIN') !== false) {
                 // Windows O/S
@@ -1157,12 +1224,24 @@ class Surat_model extends CI_Model
                 $cmd              = $cmd . ' && soffice --headless --convert-to pdf:writer_pdf_Export --outdir ' . $outdir . ' ' . $fcpath . $berkas_arsip_win;
             } elseif ($this->setting->libreoffice_path == '/') {
                 // Linux menggunakan stand-alone LibreOffice
-                $cmd = '' . FCPATH . 'vendor/libreoffice/opt/libreoffice/program/soffice --headless --norestore --convert-to pdf --outdir ' . FCPATH . LOKASI_ARSIP . ' ' . FCPATH . $berkas_arsip;
+                // MYB
+                // $cmd = '' . FCPATH . 'vendor/libreoffice/opt/libreoffice/program/soffice --headless --norestore --convert-to pdf --outdir ' . FCPATH . LOKASI_ARSIP . ' ' . FCPATH . $berkas_arsip;
+
+                // MYB
+                $berkas_arsip_fs = explode('.', $berkas_arsip)[0] . MYB_SUFFIX_FS . '.rtf';
+                $cmd = "export HOME=/tmp && " . FCPATH . "vendor/libreoffice/opt/libreoffice/program/soffice --headless --norestore --convert-to pdf:writer_pdf_Export --outdir " . FCPATH . LOKASI_ARSIP . " " . FCPATH . $berkas_arsip;
+                $cmd_fs = "export HOME=/tmp && " . FCPATH . "vendor/libreoffice/opt/libreoffice/program/soffice --headless --norestore --convert-to pdf:writer_pdf_Export --outdir " . FCPATH . LOKASI_ARSIP . " " . FCPATH . $berkas_arsip_fs;
             } else {
                 // Linux menggunakan LibreOffice yg dipasang menggunakan 'sudo apt-get'
                 $cmd = 'libreoffice --headless --norestore --convert-to pdf --outdir ' . FCPATH . LOKASI_ARSIP . ' ' . FCPATH . $berkas_arsip;
             }
             exec($cmd, $output, $return);
+
+            // MYB
+            if ($cmd_fs) {
+                exec($cmd_fs, $output, $return_fs);
+            }
+
             // Kalau berhasil, pakai pdf
             if ($return == 0) {
                 $nama_surat   = pathinfo($nama_surat, PATHINFO_FILENAME) . '.pdf';
@@ -1213,7 +1292,7 @@ class Surat_model extends CI_Model
         $input   = $data['input'];
         $file_qr = APPPATH . '../' . (($nama_qr == 'empty.png') ? LOKASI_SISIPAN_DOKUMEN : LOKASI_MEDIA) . $nama_qr;
 
-        if (! is_file($file_qr)) {
+        if (!is_file($file_qr)) {
             return $buffer;
         }
         $akhiran_qr        = '04c5cd360000000049454e44ae426082';

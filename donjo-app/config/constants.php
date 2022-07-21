@@ -129,3 +129,10 @@ defined('EXIT__AUTO_MAX')      || define('EXIT__AUTO_MAX', 125); // highest auto
  */
 define('APP_URL', ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? '') . str_replace(basename($_SERVER['SCRIPT_NAME']), '', $_SERVER['SCRIPT_NAME']));
 
+
+// MYB
+defined('MYB_BSSN_FOOTNOTE')      or define('MYB_BSSN_FOOTNOTE', 'Dokumen ini telah ditandatangani secara elektronik menggunakan sertifikat elektronik yang diterbitkan oleh Balai Sertifikasi Elektronik (BSrE), BSSN'); // footnote bssn
+defined('MYB_SUFFIX_FS')      or define('MYB_SUFFIX_FS', '_FS'); // suffix file rtf/pdf dengan footnote bssn
+defined('MYB_SUFFIX_DS1')      or define('MYB_SUFFIX_DS1', '_DS1'); // suffix file rtf/pdf dengan sign level 1 bssn
+defined('MYB_SUFFIX_DS2')      or define('MYB_SUFFIX_DS2', '_DS2'); // suffix file rtf/pdf dengan sign level 2 bssn
+defined('MYB_BSSN_FOOTNOTE_LABEL')      or define('MYB_BSSN_FOOTNOTE_LABEL', '[bssn_footnote_label]'); // tag label footnote di rtf file
