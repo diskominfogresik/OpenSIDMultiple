@@ -61,12 +61,17 @@
         }
 
         if ($data) {
-            $sql = "select pamong_id, jabatan, nama, nik, pamong_nip 
-                    from tweb_desa_pamong tdp 
-                    left outer join tweb_penduduk tp 
-                    on tdp.id_pend = tp.id 
-                    where tdp.pamong_id = $data->id_pamong";
+            $sql = "SELECT pamong_id, jabatan, pamong_nama AS nama, pamong_nik AS nik, pamong_nip FROM tweb_desa_pamong WHERE pamong_id= $data->id_pamong";
             $pamong = $this->db->query($sql)->row();
+            if(!$pamong){
+                $sql = "select pamong_id, jabatan, nama, nik, pamong_nip 
+                from tweb_desa_pamong tdp 
+                left outer join tweb_penduduk tp 
+                on tdp.id_pend = tp.id 
+                where tdp.pamong_id = $data->id_pamong";
+                $pamong = $this->db->query($sql)->row();
+            }
+            
             return $pamong;
         } else {
             return null;

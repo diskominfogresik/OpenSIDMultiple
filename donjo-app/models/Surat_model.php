@@ -1229,14 +1229,20 @@ class Surat_model extends CI_Model
 
                 // MYB
                 $berkas_arsip_fs = explode('.', $berkas_arsip)[0] . MYB_SUFFIX_FS . '.rtf';
-                $cmd = "export HOME=/tmp && " . FCPATH . "vendor/libreoffice/opt/libreoffice/program/soffice --headless --norestore --convert-to pdf:writer_pdf_Export --outdir " . FCPATH . LOKASI_ARSIP . " " . FCPATH . $berkas_arsip;
-                $cmd_fs = "export HOME=/tmp && " . FCPATH . "vendor/libreoffice/opt/libreoffice/program/soffice --headless --norestore --convert-to pdf:writer_pdf_Export --outdir " . FCPATH . LOKASI_ARSIP . " " . FCPATH . $berkas_arsip_fs;
+                // $cmd = "export HOME=/tmp && " . FCPATH . "vendor/libreoffice/opt/libreoffice/program/soffice --headless --norestore --convert-to pdf:writer_pdf_Export --outdir " . FCPATH . LOKASI_ARSIP . " " . FCPATH . $berkas_arsip;
+                $cmd = "export HOME=" . APPPATH . "tmp_surat && " . FCPATH . "vendor/libreoffice/opt/libreoffice/program/soffice --headless --norestore --convert-to pdf:writer_pdf_Export --outdir " . FCPATH . LOKASI_ARSIP . " " . FCPATH . $berkas_arsip;
+                // $cmd = FCPATH . "vendor/libreoffice/opt/libreoffice/program/soffice --headless --norestore --convert-to pdf:writer_pdf_Export --outdir " . FCPATH . LOKASI_ARSIP . " " . FCPATH . $berkas_arsip;
+                
+                // $cmd_fs = "export HOME=/tmp && " . FCPATH . "vendor/libreoffice/opt/libreoffice/program/soffice --headless --norestore --convert-to pdf:writer_pdf_Export --outdir " . FCPATH . LOKASI_ARSIP . " " . FCPATH . $berkas_arsip_fs;
+                $cmd_fs = "export HOME=" . APPPATH . "tmp_surat && " . FCPATH . "vendor/libreoffice/opt/libreoffice/program/soffice --headless --norestore --convert-to pdf:writer_pdf_Export --outdir " . FCPATH . LOKASI_ARSIP . " " . FCPATH . $berkas_arsip_fs;
+                // $cmd_fs = FCPATH . "vendor/libreoffice/opt/libreoffice/program/soffice --headless --norestore --convert-to pdf:writer_pdf_Export --outdir " . FCPATH . LOKASI_ARSIP . " " . FCPATH . $berkas_arsip_fs;
+                // echo $cmd; die();
             } else {
                 // Linux menggunakan LibreOffice yg dipasang menggunakan 'sudo apt-get'
                 $cmd = 'libreoffice --headless --norestore --convert-to pdf --outdir ' . FCPATH . LOKASI_ARSIP . ' ' . FCPATH . $berkas_arsip;
+                // echo 'nyasar'; die();
             }
             exec($cmd, $output, $return);
-
             // MYB
             if ($cmd_fs) {
                 exec($cmd_fs, $output, $return_fs);

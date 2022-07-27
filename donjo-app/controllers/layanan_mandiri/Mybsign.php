@@ -94,6 +94,7 @@ class Mybsign extends CI_Controller
 
             if ($namaSurat) {
                 $hasil = $this->prosesEsign($namaSurat, $namaSuratSigned, $id, $passphrase);
+                
                 if ($hasil === true) {
                     $res['success'] = true;
                     // update status dok
@@ -102,15 +103,18 @@ class Mybsign extends CI_Controller
                     // $this->permohonan_surat_model->update_status($id, array('status' => $status));
                     // update versi 2207
                     $this->permohonan_surat_model->proses($id, 3);
+                } else {                    
+                    $res['message'] = $this->getErrorMessage();    
                 }
 
                 echo json_encode($res);
             } else {
+                $res['message'] = $this->getErrorMessage();
                 echo json_encode($res);
                 return;
             }
         } catch (Exception $ex) {
-            echo 'ERROR';
+            $res['message'] = $ex->getMessage();
             return;
         }
     }
@@ -134,6 +138,7 @@ class Mybsign extends CI_Controller
         try {
             $pamong = $this->mybsign_model->getPamongFromLogPermohonanSurat($idPermohonan);
             if (!$pamong) {
+                $this->setErrorMessage('Pamong Not Found');
                 return false;
             }
             $nik = $pamong->nik;
@@ -145,7 +150,6 @@ class Mybsign extends CI_Controller
 {$pamong->nama}
 NIP. {$pamong->pamong_nip}
 ";
-
             $curl = curl_init();
             curl_setopt_array($curl, array(
                 CURLOPT_URL => ESIGN_SERV, // update server var to ignored 
@@ -184,6 +188,13 @@ NIP. {$pamong->pamong_nip}
             $response = curl_exec($curl);
             $content_type = curl_getinfo($curl, CURLINFO_CONTENT_TYPE);
 
+            $jsonResponse = json_decode($response);
+            if (isset($jsonResponse->error) && $jsonResponse->error !=='') {
+                $this->setErrorMessage($jsonResponse->error);
+                curl_close($curl);
+                return false;
+            }
+
             if ($response == false) {
                 // echo 'Curl error: ' . curl_error($curl);
                 $this->setErrorMessage(curl_error($curl));
@@ -200,18 +211,19 @@ NIP. {$pamong->pamong_nip}
                 fclose($file);
             } elseif ($content_type === 'application/json;charset=UTF-8') {
                 // do nothing
+                $this->setErrorMessage($jsonResponse->error);
                 curl_close($curl);
                 return false;
             }
 
             /* cek ada pesan error nggak */
-            $decodes = json_decode($response);
-            if (isset($decodes->error)) {
-                // error
-                $this->setErrorMessage($decodes->error);
-                curl_close($curl);
-                return false;
-            }
+            // $decodes = json_decode($response);
+            // if (isset($decodes->error)) {
+            //     // error
+            //     $this->setErrorMessage($decodes->error);
+            //     curl_close($curl);
+            //     return false;
+            // }
 
             curl_close($curl);
             return true;
