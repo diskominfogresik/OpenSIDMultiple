@@ -13,15 +13,15 @@ openSID Multiple adalah Sistem Informasi Desa yang berisi beberapa desa sekaligu
   kode awal
 
   ```php
-  $this->setting_model->init();
-  $this->load->model(['setting_model']);			
+  $this->header     = $this->config_model->get_data();
+  $this->setting_model->init();			
   ```
 
   kode perubahan
 
   ```php
-  $this->load->model(['setting_model']);	
-  $this->setting_model->init();
+  $this->setting_model->init();	
+  $this->header     = $this->config_model->get_data();
   ```
 
   
