@@ -58,4 +58,5 @@ Obfuscator.php
 make_obfuscate.php
 cache/*
 vendor/libreoffice/*
+donjo-app/tmp_surat/*
 .htaccess
