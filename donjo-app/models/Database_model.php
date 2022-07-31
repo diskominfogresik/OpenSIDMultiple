@@ -205,6 +205,9 @@ class Database_model extends MY_Model
         $this->load->model('track_model');
         $this->track_model->kirim_data();
         $this->catat_versi_database();
+
+        //Jalankan Migrasi Kominfo
+        $this->migrasiKominfo();
     }
 
     private function catat_versi_database()
@@ -216,7 +219,32 @@ class Database_model extends MY_Model
             $this->db->insert('migrasi', ['versi_database' => VERSI_DATABASE]);
         }
     }
-
+    private function migrasiKominfo(){
+        $start=0;
+        $end=0;
+        $_result=$this->db->where(array(
+                'key' => 'current_version_kominfo'
+            ))->get('setting_aplikasi')->row_array();
+            $this->load->model('setting_model');
+        
+        if(!empty($_result)){
+            //Migrasi Otomatis
+            $start = (int)$_result['value'];
+            $end = (int)NEWEST_VERSION_KOMINFO;
+        }else{
+            //Migrasi Pertama Kali
+            $start = 0;
+            $end=1;
+        }
+        for($i=$start;$i<$end;$i++){
+            $versijalankan = $i+1;
+            $migrate     = "migrasi_fitur_kominfo_" . (string)$versijalankan;
+            //echo $migrate;
+            $this->jalankan_migrasi($migrate);
+        }
+        $this->db->where(['key' => 'current_version_kominfo'])->update('setting_aplikasi', ['value'=>$end]);
+        
+    }
     private function getCurrentVersion()
     {
         // Untuk kasus tabel setting_aplikasi belum ada

@@ -1048,3 +1048,9 @@ function unique_slug($tabel = null, $str = null)
 
     return null;
 }
+
+/*****
+ * VARIABEL - VARIABEL PENGEMBANGAN KOMINFO
+ */
+define('NEWEST_VERSION_KOMINFO','1'); //VERSI Database Kominfo
+

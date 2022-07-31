@@ -129,6 +129,12 @@ defined('EXIT__AUTO_MAX')      || define('EXIT__AUTO_MAX', 125); // highest auto
  */
 define('APP_URL', ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') ? 'https' : 'http') . '://' . ($_SERVER['HTTP_HOST'] ?? '') . str_replace(basename($_SERVER['SCRIPT_NAME']), '', $_SERVER['SCRIPT_NAME']));
 
+/*****
+ * VARIABEL - VARIABEL PENGEMBANGAN KOMINFO
+ */
+// Pengaturan TTE
+defined('ESIGN_SERV')      or define('ESIGN_SERV', 'xxxxxxxx'); 
+defined('ESIGN_AUTH')      or define('ESIGN_AUTH', 'xxxxxxxx'); 
 
 // MYB
 defined('MYB_BSSN_FOOTNOTE')      or define('MYB_BSSN_FOOTNOTE', 'Dokumen ini telah ditandatangani secara elektronik menggunakan sertifikat elektronik yang diterbitkan oleh Balai Sertifikasi Elektronik (BSrE), BSSN'); // footnote bssn
