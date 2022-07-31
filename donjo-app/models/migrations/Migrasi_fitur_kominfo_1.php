@@ -69,10 +69,61 @@ class Migrasi_fitur_kominfo_1 extends MY_model
         //**Insert data Role SIgner di tabel user_grup */
         $data = array(
             'nama'=>'Signer',
-            'jenis'=>'2'
+            'jenis'=>'2',
+            'updated_by'=>'1',
+            'created_by'=>'1'
            
         );
         $hasil =& $this->db->insert('user_grup',$data);
+        $id_grup = $this->db->insert_id();
+        
+        //**Inser data-data yang perlu di tabel grup_akses */
+        $data=array(
+            array(
+            'id_grup'=>$id_grup,
+            'id_modul'=>'1',
+            'akses'=>'7'
+            ),array(
+                'id_grup'=>$id_grup,
+                'id_modul'=>'4',
+                'akses'=>'0'
+            ),array(
+                'id_grup'=>$id_grup,
+                'id_modul'=>'31',
+                'akses'=>'7'
+            ),array(
+                'id_grup'=>$id_grup,
+                'id_modul'=>'32',
+                'akses'=>'7'
+            ),array(
+                'id_grup'=>$id_grup,
+                'id_modul'=>'33',
+                'akses'=>'7'
+            ),array(
+                'id_grup'=>$id_grup,
+                'id_modul'=>'14',
+                'akses'=>'0'
+            ),array(
+                'id_grup'=>$id_grup,
+                'id_modul'=>'98',
+                'akses'=>'7'
+            ),array(
+                'id_grup'=>$id_grup,
+                'id_modul'=>'55',
+                'akses'=>'7'
+            ),array(
+                'id_grup'=>$id_grup,
+                'id_modul'=>'312',
+                'akses'=>'7'
+            ),array(
+                'id_grup'=>$id_grup,
+                'id_modul'=>'321',
+                'akses'=>'7'
+            )
+        );
+        foreach($data as $dat){
+            $hasil =& $this->db->insert('grup_akses',$dat);
+        }
         status_sukses($hasil);
         return $hasil;
     }
