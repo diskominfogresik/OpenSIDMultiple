@@ -82,6 +82,26 @@ class Permohonan_surat_admin extends Admin_Controller
         $data['main']                   = $this->permohonan_surat_model->list_data($o, $data['paging']->offset, $data['paging']->per_page);
         $data['keyword']                = $this->permohonan_surat_model->autocomplete();
 
+        // MYB
+        // untuk cek nik user logged in === nik ttd
+        $this->load->model('mybsign_model');
+        $dataUser = $this->mybsign_model->getUserFromId($this->session->userdata['user']);
+
+        for ($i = 0; $i < count($data['main']); $i++) {
+            if (!isset($dataUser->nik) || $dataUser->nik === null) {
+                $data['main'][$i]['is_sign_auth'] = false;
+            } else {
+                // $pamong = $this->mybsign_model->getPamongFromPamongId(json_decode($data['main'][0]['isian_form'])->pamong_id);
+                $pamong = $this->mybsign_model->getPamongFromPamongId(json_decode($data['main'][$i]['isian_form'])->pamong_id);
+                if ($dataUser->nik === $pamong->pamong_nik) {
+                    $data['main'][$i]['is_sign_auth'] = true;
+                } else {
+                    $data['main'][$i]['is_sign_auth'] = false;
+                }
+            }
+        }
+        // MYB
+
         $this->render('mandiri/permohonan_surat', $data);
     }
 
@@ -112,7 +132,7 @@ class Permohonan_surat_admin extends Admin_Controller
         // Cek hanya status = 1 (sedang diperiksa) yg boleh di proses
         $periksa = $this->permohonan_surat_model->get_permohonan(['id' => $id, 'status' => 1]);
 
-        if (! $id || ! $periksa) {
+        if (!$id || !$periksa) {
             redirect('permohonan_surat_admin');
         }
 
@@ -208,7 +228,7 @@ class Permohonan_surat_admin extends Admin_Controller
         $this->load->model('Web_dokumen_model');
         $berkas = $this->web_dokumen_model->get_nama_berkas($id_dokumen, $id_pend);
 
-        if (! $id_dokumen || ! $id_pend || ! $berkas || ! file_exists(LOKASI_DOKUMEN . $berkas)) {
+        if (!$id_dokumen || !$id_pend || !$berkas || !file_exists(LOKASI_DOKUMEN . $berkas)) {
             $data['link_berkas'] = null;
         } else {
             $data = [

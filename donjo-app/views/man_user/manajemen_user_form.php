@@ -78,6 +78,12 @@
 									<input id="email" name="email" class="form-control input-sm email" type="text" placeholder="Alamat E-mail" value="<?=$user['email']?>"></input>
 								</div>
 							</div>
+							<div class="form-group">
+								<label class="col-sm-3 control-label" for="nik">NIK</label>
+								<div class="col-sm-8">
+									<input id="nik" name="nik" class="form-control input-sm" minlength="3" maxlength="20" type="text" placeholder="NIK" value="<?=$user['nik']?>"></input>
+								</div>
+							</div>
 						</div>
 						<div class='box-footer'>
 							<div class='col-xs-12'>

@@ -1,4 +1,8 @@
 <!-- MYB -->
+<?php
+?>
+
+<!-- MYB -->
 <style>
 	.div-loading-overlay {
 		width: 100%;
@@ -181,7 +185,13 @@
 
 																			<!-- MYB -->
 																			<button type="button" class="btn btn-primary btn-flat btn-sm" title="preview" onclick="previewPdf(<?= $data['id'] ?>, false)"><i class="fa fa-file-pdf-o"></i></button>
-																			<button type="button" class="btn btn-sm btn-flat btn-warning" title="eSign 1" onclick="esign1(<?= $data['id'] ?>)"><i class="fa fa-pencil"></i></button>
+																			<?php
+																			if ($data['is_sign_auth'] === true) {
+																			?>
+																				<button type="button" class="btn btn-sm btn-flat btn-warning" title="eSign 1" onclick="esign1(<?= $data['id'] ?>)"><i class="fa fa-pencil"></i></button>
+																			<?php
+																			}
+																			?>
 																			<!-- MYB -->
 
 																		<?php elseif ($data['status_id'] == 3) : ?>

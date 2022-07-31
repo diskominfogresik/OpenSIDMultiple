@@ -82,8 +82,25 @@ class Mybsign extends CI_Controller
             return;
         }
 
-        $id = $this->input->post('id', true);
+        $id = $this->input->post('id', true); // id table permohonan_surat
         $passphrase = $this->input->post('passphrase', true);
+
+        // fungsi is_sign_auth berdasarkan nik
+        $dataUser = $this->mybsign_model->getUserFromId($this->session->userdata['user']);
+        $dataPermohonanSurat = $this->mybsign_model->getPermohonanSuratFromId($id);
+        if (!isset($dataUser) || $dataUser === null || !isset($dataPermohonanSurat) || $dataPermohonanSurat === null) {
+            $res['message'] = 'Not Authorized';
+            echo json_encode($res);
+            return;
+        }
+        $pamong = $this->mybsign_model->getPamongFromPamongId(json_decode($dataPermohonanSurat->isian_form)->pamong_id);
+        if ($dataUser->nik !== $pamong->pamong_nik) {
+            $res['message'] = 'Not Authorized';
+            echo json_encode($res);
+            return;
+        }
+        // fungsi is_sign_auth berdasarkan nik
+
         try {
             // ambil pdf
             $tmp = $this->mybsign_model->getNamaSuratFromLogById($id);
@@ -94,7 +111,7 @@ class Mybsign extends CI_Controller
 
             if ($namaSurat) {
                 $hasil = $this->prosesEsign($namaSurat, $namaSuratSigned, $id, $passphrase);
-                
+
                 if ($hasil === true) {
                     $res['success'] = true;
                     // update status dok
@@ -103,8 +120,8 @@ class Mybsign extends CI_Controller
                     // $this->permohonan_surat_model->update_status($id, array('status' => $status));
                     // update versi 2207
                     $this->permohonan_surat_model->proses($id, 3);
-                } else {                    
-                    $res['message'] = $this->getErrorMessage();    
+                } else {
+                    $res['message'] = $this->getErrorMessage();
                 }
 
                 echo json_encode($res);
@@ -189,7 +206,7 @@ NIP. {$pamong->pamong_nip}
             $content_type = curl_getinfo($curl, CURLINFO_CONTENT_TYPE);
 
             $jsonResponse = json_decode($response);
-            if (isset($jsonResponse->error) && $jsonResponse->error !=='') {
+            if (isset($jsonResponse->error) && $jsonResponse->error !== '') {
                 $this->setErrorMessage($jsonResponse->error);
                 curl_close($curl);
                 return false;

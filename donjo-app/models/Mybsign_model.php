@@ -63,7 +63,7 @@
         if ($data) {
             $sql = "SELECT pamong_id, jabatan, pamong_nama AS nama, pamong_nik AS nik, pamong_nip FROM tweb_desa_pamong WHERE pamong_id= $data->id_pamong";
             $pamong = $this->db->query($sql)->row();
-            if(!$pamong){
+            if (!$pamong) {
                 $sql = "select pamong_id, jabatan, nama, nik, pamong_nip 
                 from tweb_desa_pamong tdp 
                 left outer join tweb_penduduk tp 
@@ -71,9 +71,56 @@
                 where tdp.pamong_id = $data->id_pamong";
                 $pamong = $this->db->query($sql)->row();
             }
-            
+
             return $pamong;
         } else {
+            return null;
+        }
+    }
+
+    /**
+     * fungsi get data pamong berdasarkan pamong_id
+     * @param int $id ID pamong
+     */
+    function getPamongFromPamongId($id)
+    {
+        // get pamong ID dari permohonan surat
+        try {
+            $sql = "SELECT * FROM tweb_desa_pamong WHERE pamong_id= $id";
+            $data = $this->db->query($sql)->row();
+            return $data;
+        } catch (Exception $ex) {
+            return null;
+        }
+    }
+
+    /**
+     * fungsi get data user berdasarkan id
+     * @param int $id ID pamong
+     */
+    function getUserFromId($id)
+    {
+        // get pamong ID dari permohonan surat
+        try {
+            $sql = "SELECT * FROM user WHERE id=$id";
+            $data = $this->db->query($sql)->row();
+            return $data;
+        } catch (Exception $ex) {
+            return null;
+        }
+    }
+
+    /**
+     * fungsi get data permohonan_surat by ID
+     * @param int $id ID permohonan_surat
+     */
+    function getPermohonanSuratFromId($id)
+    {
+        try {
+            $sql = "SELECT * FROM permohonan_surat WHERE id=$id";
+            $data = $this->db->query($sql)->row();
+            return $data;
+        } catch (Exception $ex) {
             return null;
         }
     }

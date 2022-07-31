@@ -376,6 +376,9 @@ class User_model extends CI_Model
         if (isset($post['email'])) {
             $data['phone'] = htmlentities($post['phone']);
         }
+        if (isset($post['nik'])) {
+            $data['nik'] = htmlentities($post['nik']);
+        }
         if (isset($post['username'])) {
             $data['email'] = htmlentities($post['email']);
         }
