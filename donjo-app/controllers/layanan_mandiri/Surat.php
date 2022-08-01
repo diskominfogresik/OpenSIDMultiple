@@ -1,6 +1,5 @@
 <?php
-
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') or exit('No direct script access allowed');
 
 /**
  * File ini:
@@ -104,8 +103,7 @@ class Surat extends Mandiri_Controller
 		$data = array();
 		$no = $_POST['start'];
 
-		foreach ($syarat_surat as $no_syarat => $baris)
-		{
+		foreach ($syarat_surat as $no_syarat => $baris) {
 			$no++;
 			$row = array();
 			$row[] = $no;
@@ -132,8 +130,7 @@ class Surat extends Mandiri_Controller
 		$data = $this->penduduk_model->list_dokumen($this->is_login->id_pend);
 		$jenis_syarat_surat = $this->referensi_model->list_by_id('ref_syarat_surat', 'ref_syarat_id');
 
-		for ($i=0; $i < count($data); $i++)
-		{
+		for ($i = 0; $i < count($data); $i++) {
 			$berkas = $data[$i]['satuan'];
 			$list_dokumen[$i][] = $data[$i]['no'];
 			$list_dokumen[$i][] = $data[$i]['id'];
@@ -157,8 +154,7 @@ class Surat extends Mandiri_Controller
 		$this->load->library('form_validation');
 		$this->form_validation->set_rules('nama', 'Nama Dokumen', 'required');
 
-		if ($this->form_validation->run() !== true)
-		{
+		if ($this->form_validation->run() !== true) {
 			$data['success'] = -1;
 			$data['message'] = validation_errors();
 
@@ -171,31 +167,24 @@ class Surat extends Mandiri_Controller
 		$this->session->unset_userdata(['success', 'error_msg']);
 		$success_msg = 'Berhasil menyimpan data';
 
-		if ($this->is_login->id_pend)
-		{
+		if ($this->is_login->id_pend) {
 			$_POST['id_pend'] = $this->is_login->id_pend;
 			$id_dokumen = $this->input->post('id');
 			unset($_POST['id']);
 
-			if ($id_dokumen)
-			{
+			if ($id_dokumen) {
 				$hasil = $this->web_dokumen_model->update($id_dokumen, $this->is_login->id_pend, $mandiri = true);
-				if ( ! $hasil)
-				{
+				if (!$hasil) {
 					$data['success'] = -1;
 					$data['message'] = 'Gagal update';
 				}
-			}
-			else
-			{
+			} else {
 				$_POST['dok_warga'] = 1; // Boleh diubah di layanan mandiri
 				$this->web_dokumen_model->insert($mandiri = true);
 			}
 			$data['success'] = $this->session->success;
 			$data['message'] = $data['success'] == -1 ? $this->session->error_msg : $success_msg;
-		}
-		else
-		{
+		} else {
 			$data['success'] = -1;
 			$data['message'] = 'Anda tidak mempunyai hak akses itu';
 		}
@@ -212,13 +201,10 @@ class Surat extends Mandiri_Controller
 
 		$data['anggota'] = $this->web_dokumen_model->get_dokumen_di_anggota_lain($id_dokumen);
 
-		if (empty($data))
-		{
+		if (empty($data)) {
 			$data['success'] = -1;
 			$data['message'] = 'Tidak ditemukan';
-		}
-		elseif ($this->is_login->id_pend != $data['id_pend'])
-		{
+		} elseif ($this->is_login->id_pend != $data['id_pend']) {
 			$data = ['message' => 'Anda tidak mempunyai hak akses itu'];
 		}
 
@@ -231,20 +217,15 @@ class Surat extends Mandiri_Controller
 	{
 		$id_dokumen = $this->input->post('id_dokumen');
 		$data = $this->web_dokumen_model->get_dokumen($id_dokumen);
-		if (empty($data))
-		{
+		if (empty($data)) {
 			$data['success'] = -1;
 			$data['message'] = 'Tidak ditemukan';
-		}
-		elseif ($this->is_login->id_pend != $data['id_pend'])
-		{
+		} elseif ($this->is_login->id_pend != $data['id_pend']) {
 			$data['success'] = -1;
 			$data['message'] = 'Anda tidak mempunyai hak akses itu';
-		}
-		else
-		{
+		} else {
 			$this->web_dokumen_model->delete($id_dokumen);
-			$data['success'] = $this->session->userdata('success') ? : '1';
+			$data['success'] = $this->session->userdata('success') ?: '1';
 		}
 		$this->output
 			->set_content_type('application/json')
@@ -258,11 +239,11 @@ class Surat extends Mandiri_Controller
 		$data_permohonan = array('data_permohonan' => array(
 			'keterangan' => $data['keterangan'],
 			'no_hp_aktif' => $data['no_hp_aktif'],
-			'syarat' => $data['syarat']));
+			'syarat' => $data['syarat']
+		));
 		$this->session->set_userdata($data_permohonan);
 
-		if ($id_permohonan)
-		{
+		if ($id_permohonan) {
 			$data['permohonan'] = $this->permohonan_surat_model->get_permohonan($id_permohonan);
 			$data['isian_form'] = json_encode($this->permohonan_surat_model->ambil_isi_form($data['permohonan']['isian_form']));
 			$data['id_surat'] = $data['permohonan']['id_surat'];
@@ -304,12 +285,10 @@ class Surat extends Mandiri_Controller
 		$data['no_hp_aktif'] = $data_permohonan['no_hp_aktif'];
 		$data['syarat'] = json_encode($data_permohonan['syarat']);
 
-		if ($id_permohonan)
-		{
+		if ($id_permohonan) {
 			$data['status'] = 0; // kembalikan ke status 'sedang diperiksa'
 			$this->permohonan_surat_model->update($id_permohonan, $data);
-		}
-		else
+		} else
 			$this->permohonan_surat_model->insert($data);
 
 		redirect('layanan-mandiri/permohonan-surat');
@@ -339,5 +318,4 @@ class Surat extends Mandiri_Controller
 
 		redirect('layanan-mandiri/permohonan-surat');
 	}
-
 }

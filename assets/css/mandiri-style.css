@@ -114,6 +114,16 @@ th.padat, td.padat {
 	text-align: center;
 }
 
+th.aksi, td.aksi {
+	width: 1%;
+	white-space: nowrap;
+	text-align: left;
+}
+
+.btn-proses {
+	cursor: not-allowed;
+}
+
 .content, .content-header {
 	position: relative;
 	padding: 5px;
@@ -353,4 +363,43 @@ a.btn {
 	margin: -10px;
 	font-size: 18px;
 	font-weight: bold;
+}
+
+.modal-dialog {
+	background: rgb(0 0 0 / 0%);
+	top: 30%;
+	padding: 5px;
+}
+
+.modal-content {
+	border-radius: 5px;
+	background: #00c0ef;
+	border:2px solid black;
+}
+
+/* pendapat */
+.pendapat {
+	width: 100px;
+	height: auto;
+	border-color: #fff0;
+	background-color: #fff0;
+}
+
+a.pendapat {
+	padding: 10px;
+	margin: 10px;
+	color: #000;
+	font-weight: bold;
+}
+
+a.pendapat > p {
+	margin: 10px 0 0 0;
+	font-size: 11px;
+	text-transform: uppercase;
+}
+
+/* User Header */
+.navbar-nav>.user-menu>.dropdown-menu>li.user-header>img {
+	border-color: transparent;
+	height: auto;
 }

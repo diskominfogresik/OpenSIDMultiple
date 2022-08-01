@@ -13,11 +13,7 @@
 				<div class="col-md-3">
 					<div class="box box-primary">
 						<div class="box-body box-profile">
-							<?php if ($user['foto']): ?>
-								 <img class="profile-user-img img-responsive img-circle" src="<?=AmbilFoto($user['foto'])?>" alt="Pengguna">
-							<?php else: ?>
-								<img class="profile-user-img img-responsive img-circle" src="<?= base_url()?>assets/files/user_pict/kuser.png" alt="Pengguna">
-							<?php endif ?>
+							<img class="penduduk" src="<?= AmbilFoto($user['foto']); ?>" alt="Foto Pengguna">
 							<br/>
 							<p class="text-center text-bold">Foto Pengguna</p>
 							<p class="text-muted text-center text-red">(Kosongkan, jika foto tidak berubah)</p>
@@ -80,6 +76,12 @@
 								<label class="col-sm-3 control-label" for="email">Mail</label>
 								<div class="col-sm-8">
 									<input id="email" name="email" class="form-control input-sm email" type="text" placeholder="Alamat E-mail" value="<?=$user['email']?>"></input>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-sm-3 control-label" for="nik">NIK</label>
+								<div class="col-sm-8">
+									<input id="nik" name="nik" class="form-control input-sm" minlength="3" maxlength="20" type="text" placeholder="NIK" value="<?=$user['nik']?>"></input>
 								</div>
 							</div>
 						</div>

@@ -36,16 +36,15 @@ $(document).ready(function()
 
 	//CheckBox All Selected
 	checkAll();
-  $("input[name='id_cb[]'").click(function(){
-  	enableHapusTerpilih();
-  });
+	$('table').on('click', "input[name='id_cb[]']", function() {
+		enableHapusTerpilih();
+	});
 	enableHapusTerpilih();
 
-	//Display Modal Box
+	//Display dialog
 	modalBox();
-
-	//Display MAP Box
 	mapBox();
+	cetakBox();
 
 	//Confirm Delete Modal
 	$('#confirm-delete').on('show.bs.modal', function(e) {
@@ -79,7 +78,7 @@ $(document).ready(function()
 		}
 		else
 		{
-			$('#'+$(this).data('submit')).removeAttr('disabled');;
+			$('#'+$(this).data('submit')).removeAttr('disabled');
 		}
 	});
 	$('#file_path').click(function()
@@ -242,24 +241,26 @@ $(document).ready(function()
 	});
 
 	// Penggunaan datatable di inventaris
-	var t = $('#tabel4').DataTable({
-		'paging'      : true,
-    'lengthChange': true,
-    'searching'   : true,
-    'ordering'    : true,
-    'info'        : true,
-    'autoWidth'   : false,
-		'language' 		: {
-				'url': base_url + '/assets/bootstrap/js/dataTables.indonesian.lang'
-		}
-	});
-	t.on('order.dt search.dt', function()
-	{
-		t.column(0, {search:'applied', order:'applied'}).nodes().each( function (cell, i)
-		{
-			cell.innerHTML = i+1;
+	if ( ! $.fn.DataTable.isDataTable( '#tabel4' ) ) {
+		var t = $('#tabel4').DataTable({
+			'paging'      : true,
+	    'lengthChange': true,
+	    'searching'   : true,
+	    'ordering'    : true,
+	    'info'        : true,
+	    'autoWidth'   : false,
+			'language' 		: {
+					'url': base_url + '/assets/bootstrap/js/dataTables.indonesian.lang'
+			}
 		});
-	}).draw();
+		t.on('order.dt search.dt', function()
+		{
+			t.column(0, {search:'applied', order:'applied'}).nodes().each( function (cell, i)
+			{
+				cell.innerHTML = i+1;
+			});
+		}).draw();
+	}
 
 });
 
@@ -288,21 +289,14 @@ function scrollTampil(elem)
 	elem.scrollIntoView({behavior: 'smooth'});
 }
 
-function checkAll(id = "#checkall")
-{
-	$(id).click(function ()
-	{
-		if ($(".table " + id).is(':checked'))
-		{
-			$(".table input[type=checkbox]").each(function ()
-			{
+function checkAll(id = "#checkall") {
+	$('table').on('click', id, function() {
+		if ($(this).is(':checked')) {
+			$(".table input[type=checkbox]").each(function () {
 				$(this).prop("checked", true);
 			});
-		}
-		else
-		{
-			$(".table input[type=checkbox]").each(function ()
-			{
+		} else {
+			$(".table input[type=checkbox]").each(function () {
 				$(this).prop("checked", false);
 			});
 		}
@@ -312,20 +306,16 @@ function checkAll(id = "#checkall")
 	$("[data-toggle=tooltip]").tooltip();
 }
 
-function enableHapusTerpilih()
-{
-  if ($("input[name='id_cb[]']:checked:not(:disabled)").length <= 0)
-  {
-    $(".aksi-terpilih").addClass('disabled');
-    $(".hapus-terpilih").addClass('disabled');
-    $(".hapus-terpilih").attr('href','#');
-  }
-  else
-  {
-    $(".aksi-terpilih").removeClass('disabled');
-    $(".hapus-terpilih").removeClass('disabled');
-    $(".hapus-terpilih").attr('href','#confirm-delete');
-  }
+function enableHapusTerpilih() {
+	if ($("input[name='id_cb[]']:checked:not(:disabled)").length <= 0) {
+		$(".aksi-terpilih").addClass('disabled');
+		$(".hapus-terpilih").addClass('disabled');
+		$(".hapus-terpilih").attr('href','#');
+	} else {
+		$(".aksi-terpilih").removeClass('disabled');
+		$(".hapus-terpilih").removeClass('disabled');
+		$(".hapus-terpilih").attr('href','#confirm-delete');
+	}
 }
 
 function deleteAllBox(idForm, action)
@@ -334,6 +324,7 @@ function deleteAllBox(idForm, action)
 	$('#ok-delete').click(function ()
 	{
 		$('#' + idForm).attr('action', action);
+		addCsrfField($('#' + idForm)[0]);
     $('#' + idForm).submit();
 	});
 	return false;
@@ -357,6 +348,28 @@ function modalBox()
 		var modal = $(this)
 		modal.find('.modal-title').text(title)
 		$(this).find('.fetched-data').load(link.attr('href'));
+		// tambahkan csrf token kalau ada form
+		if (modal.find("form")[0]) {
+			setTimeout(function() {
+				addCsrfField(modal.find("form")[0]);
+			}, 500);
+		}
+	});
+	return false;
+}
+
+function cetakBox()
+{
+	$('#cetakBox').on('show.bs.modal', function(e)
+	{
+		var link = $(e.relatedTarget);
+		var title = link.data('title');
+		var aksi = link.data('aksi');
+		var form_action = link.data('href');
+		var modal = $(this)
+		modal.find('.title').text(title);
+		modal.find('.aksi').text(aksi);
+		modal.find('form').attr('action', form_action);
 		setTimeout(function() {
 			// tambahkan csrf token
 			addCsrfField(modal.find("form")[0]);

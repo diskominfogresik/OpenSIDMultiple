@@ -1,4 +1,4 @@
-											<div class="tab-pane <?php if ($act_tab==2): ?> active<?php endif ?>">
+											<div class="tab-pane <?php if ($act_tab == 2): ?> active<?php endif ?>">
 												<div class="row">
 													<div class="col-md-12">
 														<div class="box-header with-border">
@@ -27,6 +27,7 @@
 																				<li>Data yang dibutuhkan untuk Impor dengan memenuhi urutan format dan aturan data pada tautan di bawah ini :
 																					<div class="timeline-footer row">
 																						<a href="<?= base_url()?>assets/import/FormatImportExcel.xlsm" class="btn btn-social btn-flat btn-info btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block margin" wrap><i class="fa fa-download"></i> Aturan dan contoh format</a>
+																						<a href="<?= base_url()?>assets/import/contoh_penduduk.xlsx" class="btn btn-social btn-flat btn-info btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block margin" wrap><i class="fa fa-download"></i> Contoh penduduk ekspor</a>
 																					</div>
 																				</li>
 																			</ol>
@@ -161,9 +162,9 @@
 														</div>
 													</div>
 												</div>
-												<?php unset($_SESSION['sukses']);?>
-												<?php unset($_SESSION['baris']);?>
-												<?php unset($_SESSION['gagal']);?>
+												<?php unset($_SESSION['sukses']); ?>
+												<?php unset($_SESSION['baris']); ?>
+												<?php unset($_SESSION['gagal']); ?>
 											</div>
 										</div>
 									</div>

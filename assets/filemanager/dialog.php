@@ -323,6 +323,8 @@ $get_params = http_build_query($get_params);
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jplayer/2.7.1/skin/blue.monday/jplayer.blue.monday.min.css" />
         <link rel="stylesheet" href="https://uicdn.toast.com/tui-image-editor/latest/tui-image-editor.css">
         <link href="css/style.css?v=<?php echo $version; ?>" rel="stylesheet" type="text/css" />
+        <!-- Ubahan tampilan File Manager dari OpenSID -->
+        <link href="<?= $config['base_url']; ?>/css/filemanager-style.css" rel="stylesheet" type="text/css" />
         <!--[if lt IE 8]>
         <style>
             .img-container span, .img-container-mini span {
@@ -1076,9 +1078,10 @@ $files = $sorted;
                         $mini_src = $src_thumb = $config['ftp_base_url'].$config['ftp_thumbs_dir'].$subdir. $file;
                         $creation_thumb_path = "/".$config['ftp_base_folder'].$config['ftp_thumbs_dir'].$subdir. $file;
                     }else{
-
-                        $creation_thumb_path = $mini_src = $src_thumb = $cur_dir_thumb. $file;
-
+                        
+                        // $creation_thumb_path = $mini_src = $src_thumb = $thumbs_path. $file;
+                        $creation_thumb_path = $mini_src = $src_thumb = $cur_dir_thumb. $file;                       
+                    
                         if (!file_exists($src_thumb)) {
                             if (!create_img($file_path, $creation_thumb_path, 122, 91, 'crop', $config)) {
                                 $src_thumb = $mini_src = "";
