@@ -82,12 +82,12 @@
      * fungsi get data pamong berdasarkan pamong_id
      * @param int $id ID pamong
      */
-    function getPamongFromPamongId($id)
+    function getPamongFromPamongId($id = '0')
     {
         // get pamong ID dari permohonan surat
         try {
             // $sql = "SELECT * FROM tweb_desa_pamong WHERE pamong_id=$id";
-            $sql = "SELECT * FROM tweb_desa_pamong WHERE pamong_id=".(isset($id) ?? '');
+            $sql = "SELECT * FROM tweb_desa_pamong WHERE pamong_id=".$id;
             $data = $this->db->query($sql)->row();
             return $data;
         } catch (Exception $ex) {
