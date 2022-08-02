@@ -86,8 +86,9 @@
     {
         // get pamong ID dari permohonan surat
         try {
+            $temp = (isset($id) ? $id : '0');
             // $sql = "SELECT * FROM tweb_desa_pamong WHERE pamong_id=$id";
-            $sql = "SELECT * FROM tweb_desa_pamong WHERE pamong_id=".$id;
+            $sql = "SELECT * FROM tweb_desa_pamong WHERE pamong_id='".$temp."'";
             $data = $this->db->query($sql)->row();
             return $data;
         } catch (Exception $ex) {
