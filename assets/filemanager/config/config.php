@@ -96,7 +96,7 @@ if ($_SESSION['fm_key']) {
 			| with final /
 			|
 			*/
-			'current_path' => "../../../sites-desa/$namaDesa/desa/upload/media/",
+			'current_path' => "../../sites-desa/$namaDesa/desa/upload/media/",
 
 			/*
 			|--------------------------------------------------------------------------
@@ -107,7 +107,7 @@ if ($_SESSION['fm_key']) {
 			| DO NOT put inside upload folder
 			|
 			*/
-			'thumbs_base_path' => "../../../sites-desa/$namaDesa/desa/upload/thumbs/",
+			'thumbs_base_path' => "../../sites-desa/$namaDesa/desa/upload/thumbs/",
 			// 'thumbs_base_path' => '../../desa/upload/thumbs/',
 
 			/*
