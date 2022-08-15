@@ -64,7 +64,20 @@ openSID Multiple adalah Sistem Informasi Desa yang berisi beberapa desa sekaligu
   $namaDesa=end(explode(DIRECTORY_SEPARATOR,$_SERVER['DOCUMENT_ROOT']));
   define('FCPATH', dirname(__FILE__). '/sites-desa/'. $namaDesa.DIRECTORY_SEPARATOR);
   ```
+- file themes/natra/partials/artikel.php
 
+  kode awal
+
+  ```php
+   <img id="captcha" src="<?= base_url('securimage/securimage_show'); ?>" alt="CAPTCHA Image"/>
+  ```
+
+  kode perubahan
+
+  ```php
+  <img id="captcha" src="<?= base_url('securimage/securimage_show.php'); ?>" alt="CAPTCHA Image"/>
+  ```
+  
 - file donjo-app/models/Surat_model.php 
 
   fungsi sisipkan_logo
