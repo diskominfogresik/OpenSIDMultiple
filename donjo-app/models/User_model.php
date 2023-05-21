@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,11 +29,14 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
+
+use App\Models\User;
+use Carbon\Carbon;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -55,8 +58,6 @@ class User_model extends CI_Model
         parent::__construct();
         // Untuk dapat menggunakan library upload
         $this->load->library('upload');
-        // Untuk dapat menggunakan fungsi generator()
-        $this->load->helper('donjolib');
         $this->uploadConfig = [
             'upload_path'   => LOKASI_USER_PICT,
             'allowed_types' => 'gif|jpg|jpeg|png',
@@ -65,41 +66,36 @@ class User_model extends CI_Model
         $this->load->model('grup_model');
         // Untuk password hashing
         $this->load->helper('password');
-        // Helper upload file
-        $this->load->helper('pict_helper');
         // Helper Tulis file
         $this->load->helper('file');
     }
 
     public function siteman()
     {
-        $this->load->library('Telegram/telegram');
-
         $this->_username = $username = trim($this->input->post('username'));
         $this->_password = $password = trim($this->input->post('password'));
-        $sql             = 'SELECT id, password, id_grup, nama, session FROM user WHERE username = ?';
 
-        // User 'admin' tidak bisa di-non-aktifkan
-        if ($username !== 'admin') {
-            $sql .= ' AND active = 1';
+        if (config_item('demo_mode') && ($username == config_item('demo_user')['username'] && $password == config_item('demo_user')['password'])) {
+            // Ambil data user pertama yang merupakan admin
+            $user = User::first();
+
+            return $this->setLogin($user);
         }
 
-        $query = $this->db->query($sql, [$username]);
-        $row   = $query->row();
+        $user = User::where('username', $username)->status()->first();
 
         // Cek hasil query ke db, ada atau tidak data user ybs.
-        $userAda    = is_object($row);
-        $pwMasihMD5 = $userAda ?
-        (
-            (strlen($row->password) == 32) && (stripos($row->password, '$') === false)
-        ) : false;
+        $pwMasihMD5 = $user ?
+            (
+                (strlen($user->password) == 32) && (stripos($user->password, '$') === false)
+            ) : false;
 
         $authLolos = $pwMasihMD5
-            ? (md5($password) == $row->password)
-            : password_verify($password, $row->password);
+            ? (md5($password) == $user->password)
+            : password_verify($password, $user->password);
 
         // Login gagal: user tidak ada atau tidak lolos verifikasi
-        if ($userAda === false || $authLolos === false) {
+        if ($user === false || $authLolos === false) {
             $this->session->siteman = -1;
             if ($this->session->siteman_try > 2) {
                 $this->session->siteman_try = $this->session->siteman_try - 1;
@@ -123,33 +119,42 @@ class User_model extends CI_Model
                 $this->db->query($sql);
                 // Lanjut ke update password di database
                 $sql = 'UPDATE user SET password = ? WHERE id = ?';
-                $this->db->query($sql, [$pwBcrypt, $row->id]);
+                $this->db->query($sql, [$pwBcrypt, $user->id]);
             }
             // Lanjut set session
-            if (($row->id_grup == self::GROUP_REDAKSI) && ($this->setting->offline_mode >= 2)) {
+            if (($user->id_grup == self::GROUP_REDAKSI) && ($this->setting->offline_mode >= 2)) {
                 $this->session->siteman = -2;
             } else {
-                $this->session->siteman      = 1;
-                $this->session->sesi         = $row->session;
-                $this->session->user         = $row->id;
-                $this->session->grup         = $row->id_grup;
-                $this->session->per_page     = 10;
-                $this->session->siteman_wait = 0;
-                $this->session->siteman_try  = 4;
-                $this->session->fm_key       = $this->set_fm_key($row->id . $row->id_grup . $row->sesi);
-                $this->last_login($this->session->user);
+                return $this->setLogin($user);
+            }
+        }
+    }
 
-                if (cek_koneksi_internet()) {
-                    try {
-                        $this->telegram->sendMessage([
-                            'text'       => sprintf('%s login Halaman Admin %s pada tanggal %s', $row->nama, APP_URL, tgl_indo2(date('Y-m-d H:i:s'))),
-                            'parse_mode' => 'Markdown',
-                            'chat_id'    => $this->setting->telegram_user_id,
-                        ]);
-                    } catch (Exception $e) {
-                        log_message('error', $e->getMessage());
-                    }
-                }
+    private function setLogin($user)
+    {
+        $this->session->siteman      = 1;
+        $this->session->sesi         = $user->session;
+        $this->session->user         = $user->id;
+        $this->session->nama         = $user->nama;
+        $this->session->grup         = $user->id_grup;
+        $this->session->per_page     = 10;
+        $this->session->siteman_wait = 0;
+        $this->session->siteman_try  = 4;
+        $this->session->fm_key       = $this->set_fm_key($user->id . $user->id_grup . $user->sesi);
+        $this->session->isAdmin      = $user;
+        $this->last_login($user->id);
+
+        if (! empty($this->setting->telegram_token) && cek_koneksi_internet()) {
+            $this->load->library('Telegram/telegram');
+
+            try {
+                $this->telegram->sendMessage([
+                    'text'       => sprintf('%s login Halaman Admin %s pada tanggal %s', $user->nama, APP_URL, tgl_indo2(date('Y-m-d H:i:s'))),
+                    'parse_mode' => 'Markdown',
+                    'chat_id'    => $this->setting->telegram_user_id,
+                ]);
+            } catch (Exception $e) {
+                log_message('error', $e->getMessage());
             }
         }
     }
@@ -166,8 +171,7 @@ class User_model extends CI_Model
     //mengupdate waktu login
     private function last_login($id = '')
     {
-        $sql = 'UPDATE user SET last_login = NOW() WHERE id = ?';
-        $this->db->query($sql, $id);
+        return User::find($id)->update(['last_login' => Carbon::now()]);
     }
 
     //Harus 8 sampai 20 karakter dan sekurangnya berisi satu angka dan satu huruf besar dan satu huruf kecil dan satu karakter khusus
@@ -183,29 +187,6 @@ class User_model extends CI_Model
         $row   = $query->row_array();
 
         return $row['id_grup'];
-    }
-
-    public function login()
-    {
-        $username = $this->input->post('username');
-        $password = $this->input->post('password');
-        $sql      = 'SELECT id, password, id_grup, session FROM user WHERE id_grup = 1 LIMIT 1';
-        $query    = $this->db->query($sql);
-        $row      = $query->row();
-
-        // Verifikasi password lolos
-        if (password_verify($password, $row->password)) {
-            // Simpan sesi - sesi
-            $this->session->siteman  = 1;
-            $this->session->sesi     = $row->session;
-            $this->session->user     = $row->id;
-            $this->session->grup     = $row->id_grup;
-            $this->session->per_page = 10;
-        }
-        // Verifikasi password gagal
-        else {
-            $this->session->siteman = -1;
-        }
     }
 
     public function logout()
@@ -268,7 +249,7 @@ class User_model extends CI_Model
 
     private function list_data_sql()
     {
-        $sql = ' FROM user u, user_grup g WHERE u.id_grup = g.id ';
+        $sql = ' FROM user u LEFT JOIN tweb_desa_pamong p ON u.pamong_id = p.pamong_id, user_grup g WHERE u.id_grup = g.id ';
         $sql .= $this->search_sql();
         $sql .= $this->filter_sql();
 
@@ -279,7 +260,7 @@ class User_model extends CI_Model
     {
         // Ordering sql
         switch ($order) {
-            case 1 :
+            case 1:
                 $order_sql = ' ORDER BY u.username';
                 break;
 
@@ -309,7 +290,7 @@ class User_model extends CI_Model
         // Paging sql
         $paging_sql = ' LIMIT ' . $offset . ',' . $limit;
         // Query utama
-        $sql = 'SELECT u.*, g.nama as grup ' . $this->list_data_sql();
+        $sql = 'SELECT u.*, p.pamong_status, g.nama as grup ' . $this->list_data_sql();
         $sql .= $order_sql;
         $sql .= $paging_sql;
 
@@ -339,23 +320,18 @@ class User_model extends CI_Model
 
         $data = $this->sterilkan_input($this->input->post());
 
-        $sql                = 'SELECT username FROM user WHERE username = ?';
-        $dbQuery            = $this->db->query($sql, [$data['username']]);
-        $userSudahTerdaftar = $dbQuery->row();
-        $userSudahTerdaftar = is_object($userSudahTerdaftar) ? $userSudahTerdaftar->username : false;
-
-        if ($userSudahTerdaftar !== false) {
-            $this->session->success   = -1;
-            $this->session->error_msg = ' -> Username ini sudah ada. silahkan pilih username lain';
-            redirect('man_user');
+        if (empty($data['pamong_id'])) {
+            $data['pamong_id'] = null;
         }
 
         $pwHash           = $this->generatePasswordHash($data['password']);
         $data['password'] = $pwHash;
         $data['session']  = md5(now());
 
-        $data['foto'] = $this->urusFoto();
-        $data['nama'] = strip_tags($data['nama']);
+        $data['foto']           = $this->urusFoto();
+        $data['nama']           = strip_tags($data['nama']);
+        $data['notif_telegram'] = (int) $data['notif_telegram'];
+        $data['id_telegram']    = (int) $data['id_telegram'];
 
         if (! $this->db->insert('user', $data)) {
             $this->session->success   = -1;
@@ -367,26 +343,34 @@ class User_model extends CI_Model
     {
         $data             = [];
         $data['password'] = $post['password'];
-        if (isset($post['username'])) {
+        if (isset($post['username']) && ! empty($post['username'])) {
             $data['username'] = alfanumerik($post['username']);
         }
         if (isset($post['nama'])) {
-            $data['nama'] = alfanumerik_spasi($post['nama']);
+            $data['nama'] = nama($post['nama']);
         }
         if (isset($post['email'])) {
             $data['phone'] = htmlentities($post['phone']);
         }
-        if (isset($post['nik'])) {
-            $data['nik'] = htmlentities($post['nik']);
-        }
-        if (isset($post['username'])) {
+        if (isset($post['email']) && ! empty($post['email'])) {
             $data['email'] = htmlentities($post['email']);
         }
         if (isset($post['id_grup'])) {
             $data['id_grup'] = $post['id_grup'];
         }
+        if (isset($post['pamong_id'])) {
+            $data['pamong_id'] = $post['pamong_id'];
+        }
         if (isset($post['foto'])) {
             $data['foto'] = $post['foto'];
+        }
+
+        if (isset($post['notif_telegram'])) {
+            $data['notif_telegram'] = (int) $post['notif_telegram'];
+        }
+
+        if (isset($post['id_telegram'])) {
+            $data['id_telegram'] = (int) $post['id_telegram'];
         }
 
         return $data;
@@ -405,16 +389,21 @@ class User_model extends CI_Model
         $this->session->success   = 1;
 
         $data = $this->sterilkan_input($this->input->post());
+
+        if (empty($data['pamong_id'])) {
+            $data['pamong_id'] = null;
+        }
+
         if (empty($idUser)) {
-            $this->session->error_msg = ' -> Pengguna tidak ditemukan datanya.';
-            $this->session->success   = -1;
+            session_error(' -> Pengguna tidak ditemukan datanya.');
             redirect('man_user');
         }
 
-        if (empty($data['username']) || empty($data['password'])
-        || empty($data['nama']) || ! in_array((int) ($data['id_grup']), $this->grup_model->list_id_grup())) {
-            $this->session->error_msg = ' -> Nama, Username dan Kata Sandi harus diisi';
-            $this->session->success   = -1;
+        if (
+            empty($data['username']) || empty($data['password'])
+                                     || empty($data['nama']) || ! in_array((int) ($data['id_grup']), $this->grup_model->list_id_grup())
+        ) {
+            session_error(' -> Nama, Username dan Kata Sandi harus diisi');
             redirect('man_user');
         }
 
@@ -423,7 +412,7 @@ class User_model extends CI_Model
             unset($data['password']);
         }
         // Untuk demo jangan ubah username atau password
-        if ($idUser == 1 && config_item('demo_mode')) {
+        if ($idUser == 1 && (config_item('demo_mode') || ENVIRONMENT === 'development')) {
             unset($data['username'], $data['password']);
         }
         if ($data['password']) {
@@ -431,10 +420,18 @@ class User_model extends CI_Model
             $data['password'] = $pwHash;
         }
 
+        // cek pamong apakah sudah mempunyai user atau belum
+        if ($data['pamong_id'] != null && $data['pamong_id'] != '') {
+            $pamong = $this->db->where('pamong_id', (int) $data['pamong_id'])->where('id != ', $idUser)->get('user')->num_rows();
+            if ($pamong > 0) {
+                session_error(' -> Pamong sudah dipilih oleh user lainnya. Silahkan pilih Pamong Lainnya');
+                redirect('man_user');
+            }
+        }
+
         $data['foto'] = $this->urusFoto($idUser);
         if (! $this->db->where('id', $idUser)->update('user', $data)) {
-            $this->session->success   = -1;
-            $this->session->error_msg = ' -> Gagal memperbarui data di database';
+            session_error(' -> Gagal memperbarui data di database');
         }
         $this->cache->file->delete("{$idUser}_cache_modul");
     }
@@ -535,8 +532,10 @@ class User_model extends CI_Model
         }
 
         // Ganti password
-        if ($this->input->post('pass_lama') != ''
-        || $pass_baru != '' || $pass_baru1 != '') {
+        if (
+            $this->input->post('pass_lama') != ''
+            || $pass_baru != '' || $pass_baru1 != ''
+        ) {
             $sql   = 'SELECT password,username,id_grup,session FROM user WHERE id = ?';
             $query = $this->db->query($sql, [$id]);
             $row   = $query->row();
@@ -580,11 +579,16 @@ class User_model extends CI_Model
     {
         $data = $this->periksa_input_password($id);
 
-        $data['nama'] = alfanumerik_spasi($this->input->post('nama'));
+        $data['nama']           = alfanumerik_spasi($this->input->post('nama'));
+        $data['notif_telegram'] = (int) $this->input->post('notif_telegram');
+        $data['id_telegram']    = alfanumerik($this->input->post('id_telegram'));
         // Update foto
         $data['foto'] = $this->urusFoto($id);
-        $hasil        = $this->db->where('id', $id)
-            ->update('user', $data);
+        $hasil        = $this->db->where('id', $id)->update('user', $data);
+
+        // Untuk Blade
+        $this->session->isAdmin = User::whereId($id)->first();
+
         status_sukses($hasil, $gagal_saja = true);
     }
 
@@ -626,8 +630,6 @@ class User_model extends CI_Model
      * - fail: nama berkas lama, kalau ada
      *
      * @param mixed $idUser
-     *
-     * @return
      */
     private function urusFoto($idUser = '')
     {
@@ -676,8 +678,6 @@ class User_model extends CI_Model
      * @param mixed $upload_path
      * @param mixed $lokasi
      * @param mixed $redirect
-     *
-     * @return
      */
     private function uploadFoto($allowed_types, $upload_path, $lokasi, $redirect)
     {
@@ -763,10 +763,5 @@ class User_model extends CI_Model
         }
 
         return $ada_akses;
-    }
-
-    public function jml_pengguna()
-    {
-        return $this->db->get('user')->num_rows();
     }
 }

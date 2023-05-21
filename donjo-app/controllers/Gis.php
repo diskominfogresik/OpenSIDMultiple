@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -105,10 +105,10 @@ class Gis extends Admin_Controller
         $data['list_jenis_kelamin']   = $this->referensi_model->list_data('tweb_penduduk_sex');
         $data['list_dusun']           = $this->wilayah_model->list_dusun();
         $data['wilayah']              = $this->wilayah_model->list_wil();
-        $data['desa']                 = $this->config_model->get_data();
-        $data['lokasi']               = $this->plan_lokasi_model->list_data();
-        $data['garis']                = $this->plan_garis_model->list_data();
-        $data['area']                 = $this->plan_area_model->list_data();
+        $data['desa']                 = $this->header['desa'];
+        $data['lokasi']               = $this->plan_lokasi_model->list_lokasi();
+        $data['garis']                = $this->plan_garis_model->list_garis();
+        $data['area']                 = $this->plan_area_model->list_area();
         $data['lokasi_pembangunan']   = $this->pembangunan_model->list_lokasi_pembangunan();
         $data['penduduk']             = $this->penduduk_model->list_data_map();
         $data['keyword']              = $this->penduduk_model->autocomplete();
@@ -264,10 +264,11 @@ class Gis extends Admin_Controller
     {
         $list_session = ['umur_min', 'umur_max', 'pekerjaan_id', 'status', 'agama', 'pendidikan_sedang_id', 'pendidikan_kk_id', 'status_penduduk'];
 
-        foreach ($list_session as $session) {
-            $data[$session] = $this->session->userdata($session) ?: '';
+        foreach ($list_session as $list) {
+            $data[$list] = $this->session->{$list} ?: '';
         }
 
+        $data['input_umur']           = true;
         $data['list_agama']           = $this->referensi_model->list_data('tweb_penduduk_agama');
         $data['list_pendidikan']      = $this->referensi_model->list_data('tweb_penduduk_pendidikan');
         $data['list_pendidikan_kk']   = $this->referensi_model->list_data('tweb_penduduk_pendidikan_kk');

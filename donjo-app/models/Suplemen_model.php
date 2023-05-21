@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,20 +29,20 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
-defined('BASEPATH') || exit('No direct script access allowed');
+use OpenSpout\Common\Entity\Style\Border;
+use OpenSpout\Common\Entity\Style\Color;
+use OpenSpout\Reader\Common\Creator\ReaderEntityFactory;
+use OpenSpout\Writer\Common\Creator\Style\BorderBuilder;
+use OpenSpout\Writer\Common\Creator\Style\StyleBuilder;
+use OpenSpout\Writer\Common\Creator\WriterEntityFactory;
 
-use Box\Spout\Common\Entity\Style\Border;
-use Box\Spout\Common\Entity\Style\Color;
-use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
-use Box\Spout\Writer\Common\Creator\Style\BorderBuilder;
-use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
-use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
+defined('BASEPATH') || exit('No direct script access allowed');
 
 class Suplemen_model extends MY_Model
 {
@@ -121,7 +121,7 @@ class Suplemen_model extends MY_Model
                 $data['data']  = $this->list_penduduk($id);
                 break;
 
-            // Sasaran Keluarga
+                // Sasaran Keluarga
             case '2':
                 $data['judul'] = 'No.KK / Nama Kepala Keluarga';
                 $data['data']  = $this->list_kk($id);
@@ -246,7 +246,7 @@ class Suplemen_model extends MY_Model
                 $data['judul']['judul_terdata_nama'] = 'Nama Penduduk';
                 break;
 
-            // Sasaran Keluarga
+                // Sasaran Keluarga
             case '2':
                 $data                                = $this->get_kk_terdata($suplemen_id, $p);
                 $data['judul']['judul_terdata_info'] = 'NIK KK';
@@ -255,7 +255,7 @@ class Suplemen_model extends MY_Model
 
                 break;
 
-            // Sasaran X
+                // Sasaran X
             default:
                 // code...
                 break;
@@ -298,7 +298,7 @@ class Suplemen_model extends MY_Model
     {
         $hasil = [];
         // Paging
-        if (! empty($this->session->per_page) && $this->session->per_page > 0) {
+        if ((! empty($this->session->per_page) && $this->session->per_page > 0) || $p > 0) {
             $this->get_penduduk_terdata_sql($suplemen_id);
             $hasil['paging'] = $this->paging($p);
             $this->db->limit($hasil['paging']->per_page, $hasil['paging']->offset);
@@ -309,6 +309,18 @@ class Suplemen_model extends MY_Model
             ->select('s.*, s.id_terdata, o.nik, o.nama, o.tempatlahir, o.tanggallahir, o.sex, k.no_kk, w.rt, w.rw, w.dusun')
             ->select('(case when (o.id_kk IS NULL or o.id_kk = 0) then o.alamat_sekarang else k.alamat end) AS alamat');
         $this->search_sql('1');
+        if ($sex = $this->session->sex) {
+            $this->db->where('o.sex', $sex);
+        }
+        if ($dusun = $this->session->dusun) {
+            $this->db->where('w.dusun', $dusun);
+        }
+        if ($rw = $this->session->rw) {
+            $this->db->where('w.rw', $rw);
+        }
+        if ($rt = $this->session->rt) {
+            $this->db->where('w.rt', $rt);
+        }
         $query = $this->db->get();
 
         if ($query->num_rows() > 0) {
@@ -344,7 +356,7 @@ class Suplemen_model extends MY_Model
     {
         $hasil = [];
         // Paging
-        if (! empty($this->session->per_page) && $this->session->per_page > 0) {
+        if ((! empty($this->session->per_page) && $this->session->per_page > 0) || $p > 0) {
             $this->get_kk_terdata_sql($suplemen_id);
             $hasil['paging'] = $this->paging($p);
             $this->db->limit($hasil['paging']->per_page, $hasil['paging']->offset);
@@ -354,6 +366,18 @@ class Suplemen_model extends MY_Model
         $this->db
             ->select('s.*, s.id_terdata, o.no_kk, s.id_suplemen, o.nik_kepala, o.alamat, q.nik, q.nama, q.tempatlahir, q.tanggallahir, q.sex, w.rt, w.rw, w.dusun');
         $this->search_sql('2');
+        if ($sex = $this->session->sex) {
+            $this->db->where('q.sex', $sex);
+        }
+        if ($dusun = $this->session->dusun) {
+            $this->db->where('w.dusun', $dusun);
+        }
+        if ($rw = $this->session->rw) {
+            $this->db->where('w.rw', $rw);
+        }
+        if ($rt = $this->session->rt) {
+            $this->db->where('w.rt', $rt);
+        }
         $query = $this->db->get();
 
         if ($query->num_rows() > 0) {
@@ -406,7 +430,7 @@ class Suplemen_model extends MY_Model
                 $data['alamat_wilayah'] = $this->surat_model->get_alamat_wilayah($data);
                 break;
 
-            // Sasaran Keluarga
+                // Sasaran Keluarga
             case 2:
                 $data                 = $this->keluarga_model->get_kepala_kk($id_terdata);
                 $data['terdata_info'] = $data['nik'];
@@ -468,6 +492,15 @@ class Suplemen_model extends MY_Model
     {
         $this->db->where('id', $id_terdata);
         $this->db->delete('suplemen_terdata');
+    }
+
+    public function hapus_terdata_all()
+    {
+        $id_cb = $this->input->post('id_cb');
+
+        foreach ($id_cb as $id) {
+            $this->hapus_terdata($id);
+        }
     }
 
     // $id = suplemen_terdata.id
@@ -562,7 +595,6 @@ class Suplemen_model extends MY_Model
                 break;
 
             default:
-
         }
         if (! empty($list_suplemen)) {
             return ['daftar_suplemen' => $list_suplemen, 'profil' => $data_profil];
@@ -584,6 +616,7 @@ class Suplemen_model extends MY_Model
                         ->like('o.nama', $cari)
                         ->or_like('o.nik', $cari)
                         ->or_like('k.no_kk', $cari)
+                        ->or_like('o.tag_id_card', $cari)
                         ->group_end();
                     break;
 
@@ -595,6 +628,7 @@ class Suplemen_model extends MY_Model
                         ->or_like('o.nik_kepala', $cari)
                         ->or_like('q.nik', $cari)
                         ->or_like('q.nama ', $cari)
+                        ->or_like('q.tag_id_card', $cari)
                         ->group_end();
                     break;
             }
@@ -639,10 +673,9 @@ class Suplemen_model extends MY_Model
     public function ekspor($id = 0)
     {
         $data_suplemen = $this->get_rincian(0, $id);
-        // print_r($data_anggota);
+
         $writer    = WriterEntityFactory::createXLSXWriter();
         $file_name = namafile($data_suplemen[$this->table]['nama']) . '.xlsx';
-        // $writer->openToFile($filePath);
         $writer->openToBrowser($file_name);
 
         // Ubah Nama Sheet
@@ -740,10 +773,7 @@ class Suplemen_model extends MY_Model
         $this->upload->initialize($config);
 
         if (! $this->upload->do_upload('userfile')) {
-            $this->session->error_msg = $this->upload->display_errors();
-            $this->session->success   = -1;
-
-            return;
+            return session_error($this->upload->display_errors());
         }
 
         // Data Suplemen
@@ -756,17 +786,19 @@ class Suplemen_model extends MY_Model
         $reader = ReaderEntityFactory::createXLSXReader();
         $reader->open($file);
 
-        $data_peserta = [];
+        $data_peserta      = [];
+        $terdaftar_peserta = [];
 
         foreach ($reader->getSheetIterator() as $sheet) {
-            $no_baris  = 0;
-            $no_gagal  = 0;
-            $no_sukses = 0;
-            $pesan     = '';
+            $baris_pertama = true;
+            $no_baris      = 0;
+            $no_gagal      = 0;
+            $no_sukses     = 0;
+            $pesan         = '';
 
             $field = ['id', 'nama', 'sasaran', 'keterangan'];
 
-            // // Sheet Program
+            // Sheet Program
             if ($sheet->getName() == 'Peserta') {
                 $suplemen_record = $this->get_suplemen($suplemen_id);
                 $sasaran         = $suplemen_record['sasaran'];
@@ -780,7 +812,6 @@ class Suplemen_model extends MY_Model
                 }
 
                 foreach ($sheet->getRowIterator() as $row) {
-                    $no_baris++;
                     $cells   = $row->getCells();
                     $peserta = trim((string) $cells[0]); // NIK atau No_kk sesuai sasaran
 
@@ -790,9 +821,13 @@ class Suplemen_model extends MY_Model
                     }
 
                     // Abaikan baris pertama / judul
-                    if ($no_baris <= 1) {
+                    if ($baris_pertama) {
+                        $baris_pertama = false;
+
                         continue;
                     }
+
+                    $no_baris++;
 
                     // Cek valid data peserta sesuai sasaran
                     $cek_peserta = $this->cek_peserta($peserta, $sasaran);
@@ -819,6 +854,8 @@ class Suplemen_model extends MY_Model
 
                         continue;
                     }
+
+                    $terdaftar_peserta[] = $peserta;
 
                     // Simpan data peserta yg diimpor dalam bentuk array
                     $simpan = [
@@ -926,14 +963,5 @@ class Suplemen_model extends MY_Model
             'sasaran_peserta' => $sasaran_peserta,
             'valid'           => array_column($data, 'no'), // untuk daftar valid anggota keluarga
         ];
-    }
-
-    public function slug($slug = null)
-    {
-        return $this->db
-            ->select('id')
-            ->get_where($this->table, ['slug' => $slug])
-            ->row()
-            ->id;
     }
 }

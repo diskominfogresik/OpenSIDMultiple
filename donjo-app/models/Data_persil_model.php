@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,11 +29,13 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
+
+require_once APPPATH . '/libraries/MyException.php';
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -285,7 +287,7 @@ class Data_persil_model extends MY_Model
         $data['luas_persil']       = bilangan($post['luas_persil']) ?: null;
         $data['lokasi']            = $post['lokasi'] ?: null;
         $data['path']              = $post['path'];
-        $data['id_peta']           = ($post['area_tanah'] == 1 || $post['area_tanah'] == null) ? $post['id_peta'] : null;
+        $data['id_peta']           = ($post['area_tanah'] == 1 || $post['area_tanah'] == null) ? (empty($post['id_peta']) ? null : $post['id_peta']) : null;
 
         $id_persil = $post['id_persil'] ?: $this->get_persil_by_nomor($post['no_persil'], $post['nomor_urut_bidang']);
         if ($id_persil) {
@@ -322,6 +324,9 @@ class Data_persil_model extends MY_Model
                 ->result_array();
             $data = array_combine(array_column($data, 'id'), $data);
         }
+        if (empty($data)) {
+            throw new Referensi_kosong('ref_persil_kelas');
+        }
 
         return $data;
     }
@@ -354,10 +359,5 @@ class Data_persil_model extends MY_Model
         $mutasi['path']           = $data['path'];
         $mutasi['id_peta']        = ($data['area_tanah'] == 1 || $data['area_tanah'] == null) ? $data['id_peta'] : null;
         $this->db->insert('mutasi_cdesa', $mutasi);
-    }
-
-    public function jml_persil()
-    {
-        return $this->db->get('persil')->num_rows();
     }
 }

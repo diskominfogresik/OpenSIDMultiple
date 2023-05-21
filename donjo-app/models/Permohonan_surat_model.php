@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,13 +29,18 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
 defined('BASEPATH') || exit('No direct script access allowed');
+
+use App\Models\Dokumen;
+use App\Models\LogSurat;
+use App\Models\PermohonanSurat;
+use App\Models\SyaratSurat;
 
 class Permohonan_surat_model extends CI_Model
 {
@@ -101,7 +106,8 @@ class Permohonan_surat_model extends CI_Model
 
     private function filter_sql()
     {
-        if ($filter = $this->session->filter) {
+        $filter = $this->session->filter;
+        if ($filter != '') {
             $this->db->where('u.status', $filter);
         }
     }
@@ -138,9 +144,11 @@ class Permohonan_surat_model extends CI_Model
 
         //Ordering SQL
         switch ($o) {
-            case 1: $this->db->order_by('u.created_at', 'asc'); break;
+            case 1: $this->db->order_by('u.created_at', 'asc');
+                break;
 
-            case 2: $this->db->order_by('u.created_at', 'desc'); break;
+            case 2: $this->db->order_by('u.created_at', 'desc');
+                break;
 
             default: $this->db->order_by('(u.status = 0), ISNULL(u.no_antrian)');
         }
@@ -173,11 +181,11 @@ class Permohonan_surat_model extends CI_Model
     public function list_permohonan_perorangan($id_pemohon, $kat = null)
     {
         if ($kat == 1) {
-            $this->db->where_not_in('u.status', [4]);
+            $this->db->where_not_in('u.status', [PermohonanSurat::SUDAH_DIAMBIL]);
         }
 
         $data = $this->db
-            ->select('u.*, u.status as status_id, n.nama AS nama, n.nik AS nik, s.nama as jenis_surat')
+            ->select('u.*, u.status as status_id, n.nama AS nama, n.nik AS nik, s.nama as jenis_surat, JSON_VALUE(isian_form,"$.nomor") AS nomor')
             ->where('id_pemohon', $id_pemohon)
             ->from('permohonan_surat u')
             ->join('tweb_penduduk n', 'u.id_pemohon = n.id', 'left')
@@ -187,9 +195,13 @@ class Permohonan_surat_model extends CI_Model
             ->get()
             ->result_array();
 
+        $j = 0;
+
         for ($i = 0; $i < count($data); $i++) {
             $data[$i]['no']     = $j + 1;
             $data[$i]['status'] = $this->referensi_model->list_ref_flip(STATUS_PERMOHONAN)[$data[$i]['status']];
+            $data[$i]['id_log'] = LogSurat::where('id_format_surat', $data[$i]['id_surat'])->where('no_surat', $data[$i]['nomor'])->first()->id;
+            $data[$i]['tte']    = LogSurat::where('id_format_surat', $data[$i]['id_surat'])->where('no_surat', $data[$i]['nomor'])->first()->tte;
             $j++;
         }
 
@@ -214,12 +226,12 @@ class Permohonan_surat_model extends CI_Model
 
     public function proses($id, $status, $id_pemohon = '')
     {
-        if ($status == 0) {
+        if ($status == PermohonanSurat::BELUM_LENGKAP) {
             // Belum Lengkap
-            $this->db->where('status', 1);
-        } elseif ($status == 5) {
+            $this->db->where('status', PermohonanSurat::SEDANG_DIPERIKSA);
+        } elseif ($status == PermohonanSurat::DIBATALKAN) {
             // Batalkan hanya jika status = 0 (belum lengkap) atau 1 (sedang diproses)
-            $this->db->where_in('status', ['0', '1']);
+            $this->db->where_in('status', [PermohonanSurat::BELUM_LENGKAP, PermohonanSurat::SEDANG_DIPERIKSA]);
 
             if ($id_pemohon) {
                 $this->db->where('id_pemohon', $id_pemohon);
@@ -250,31 +262,18 @@ class Permohonan_surat_model extends CI_Model
 
     public function get_syarat_permohonan($id)
     {
-        $permohonan = $this->db->where('id', $id)
-            ->get('permohonan_surat')
-            ->row_array();
-        $syarat_permohonan = json_decode($permohonan['syarat'], true);
-        $dok_syarat        = array_values($syarat_permohonan);
-        if ($dok_syarat) {
-            $this->db->where_in('id', $dok_syarat);
-        }
-        $dokumen_kelengkapan = $this->db
-            ->select('id, nama')
-            ->get('dokumen')
-            ->result_array();
+        $permohonan   = PermohonanSurat::select(['syarat'])->find($id) ?? show_404();
+        $syarat_surat = collect($permohonan->syarat)->map(static function ($item, $key) {
+            $syaratSurat        = SyaratSurat::select(['ref_syarat_nama'])->find($key);
+            $dokumenKelengkapan = Dokumen::select(['nama'])->find($item);
 
-        $dok_syarat = [];
-
-        foreach ($dokumen_kelengkapan as $dok) {
-            $dok_syarat[$dok['id']] = $dok['nama'];
-        }
-        $syarat_surat = $this->surat_master_model->get_syarat_surat($permohonan['id_surat']);
-
-        for ($i = 0; $i < count($syarat_surat); $i++) {
-            $dok_id                       = $syarat_permohonan[$syarat_surat[$i]['ref_syarat_id']];
-            $syarat_surat[$i]['dok_id']   = $dok_id;
-            $syarat_surat[$i]['dok_nama'] = ($dok_id == '-1') ? 'Bawa bukti fisik ke Kantor Desa' : $dok_syarat[$dok_id];
-        }
+            return [
+                'ref_syarat_id'   => $key,
+                'ref_syarat_nama' => $syaratSurat->ref_syarat_nama,
+                'dok_id'          => $item,
+                'dok_nama'        => ($item == '-1') ? 'Bawa bukti fisik ke Kantor Desa' : $dokumenKelengkapan->nama,
+            ];
+        })->values();
 
         return $syarat_surat;
     }

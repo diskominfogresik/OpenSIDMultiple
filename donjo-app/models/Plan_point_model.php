@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -99,13 +99,17 @@ class Plan_point_model extends MY_Model
     public function list_data($o = 0, $offset = 0, $limit = 1000)
     {
         switch ($o) {
-            case 1: $order_sql = ' ORDER BY nama'; break;
+            case 1: $order_sql = ' ORDER BY nama';
+                break;
 
-            case 2: $order_sql = ' ORDER BY nama DESC'; break;
+            case 2: $order_sql = ' ORDER BY nama DESC';
+                break;
 
-            case 3: $order_sql = ' ORDER BY enabled'; break;
+            case 3: $order_sql = ' ORDER BY enabled';
+                break;
 
-            case 4: $order_sql = ' ORDER BY enabled DESC'; break;
+            case 4: $order_sql = ' ORDER BY enabled DESC';
+                break;
 
             default:$order_sql = ' ORDER BY id';
         }
@@ -281,8 +285,8 @@ class Plan_point_model extends MY_Model
         move_uploaded_file($_FILES['simbol']['tmp_name'], $vfile_upload);
 
         $im_src     = imagecreatefrompng($vfile_upload);
-        $src_width  = imageSX($im_src);
-        $src_height = imageSY($im_src);
+        $src_width  = imagesx($im_src);
+        $src_height = imagesy($im_src);
         if (($src_width * 3) < ($src_height * 3)) {
             $dst_width  = 32;
             $dst_height = ($dst_width / $src_width) * $src_height;

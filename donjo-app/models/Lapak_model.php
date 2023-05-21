@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -100,8 +100,13 @@ class Lapak_model extends MY_Model
             ->get()
             ->row();
 
+        $default_nama    = 'Admin';
+        $default_telepon = $this->db->get_where('media_sosial', ['id' => 6, 'tipe' => 1, 'enabled' => 1])->row()->link;
+
         $this->db
-            ->select('pr.*, pk.kategori, p.nama AS pelapak, p.nik, lp.telepon, lp.zoom')
+            ->select('pr.*, pk.kategori, p.nik, lp.zoom')
+            ->select("(case when p.nama is null then '{$default_nama}' else p.nama end) as pelapak")
+            ->select("(case when p.nama is null then '{$default_telepon}' else lp.telepon end) as telepon")
             ->select("if(lp.lat is null or lp.lat = ' ', if(m.lat is null or m.lat = ' ', '{$kantor->lat}', m.lat), lp.lat) as lat ")
             ->select("if(lp.lng is null or lp.lng = ' ', if(m.lng is null or m.lng = ' ', '{$kantor->lng}', m.lng), lp.lng) as lng ")
             ->from('produk pr')
@@ -169,18 +174,26 @@ class Lapak_model extends MY_Model
             $foto[] = $value;
         }
 
-        return [
+        $data = [
             'id_pelapak'         => bilangan($post['id_pelapak']),
             'nama'               => $post['nama'],
             'id_produk_kategori' => alfanumerik_spasi($post['id_produk_kategori']),
             'harga'              => bilangan($post['harga']),
             'satuan'             => alfanumerik_spasi($post['satuan']),
             'tipe_potongan'      => bilangan($post['tipe_potongan']),
-            'potongan'           => bilangan(($post['tipe_potongan'] == 1) ? $post['persen'] : $post['nominal']),
             'deskripsi'          => $this->security->xss_clean($post['deskripsi']),
-
-            'foto' => ($foto == []) ? null : json_encode($foto),
+            'foto'               => ($foto == []) ? null : json_encode($foto),
         ];
+
+        if ($post['tipe_potongan'] == 1 && ! empty($post['persen'])) {
+            $data['potongan'] = bilangan($post['persen']);
+        }
+
+        if ($post['tipe_potongan'] == 2 && ! empty($post['nominal'])) {
+            $data['potongan'] = bilangan($post['nominal']);
+        }
+
+        return $data;
     }
 
     private function upload_foto_produk($key = 1)

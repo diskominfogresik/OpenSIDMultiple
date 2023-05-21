@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -42,10 +42,10 @@ class Suplemen extends Admin_Controller
     public function __construct()
     {
         parent::__construct();
-        $this->load->model(['suplemen_model', 'pamong_model', 'penduduk_model', 'keluarga_model']);
+        $this->load->model(['suplemen_model', 'pamong_model', 'penduduk_model', 'keluarga_model', 'wilayah_model']);
         $this->modul_ini     = 2;
         $this->sub_modul_ini = 25;
-        $this->_list_session = ['cari', 'sasaran'];
+        $this->_list_session = ['cari', 'sasaran', 'sex', 'dusun', 'rw', 'rt'];
         $this->_set_page     = ['20', '50', '100'];
     }
 
@@ -121,6 +121,13 @@ class Suplemen extends Admin_Controller
 
     public function filter($filter)
     {
+        if ($filter == 'dusun') {
+            $this->session->unset_userdata(['rw', 'rt']);
+        }
+        if ($filter == 'rw') {
+            $this->session->unset_userdata('rt');
+        }
+
         //# untuk filter pada data rincian suplemen
         $value      = $this->input->post($filter);
         $id_rincian = $this->session->id_rincian;
@@ -139,7 +146,7 @@ class Suplemen extends Admin_Controller
         //# untuk filter pada data rincian suplemen
         if ($id) {
             $this->session->id_rincian = $id;
-            $this->session->unset_userdata('cari');
+            $this->session->unset_userdata(['cari', 'sex', 'dusun', 'rw', 'rt']);
 
             redirect("{$this->controller}/rincian/{$id}");
         }
@@ -158,12 +165,40 @@ class Suplemen extends Admin_Controller
             $this->session->per_page = $per_page;
         }
 
-        $data             = $this->suplemen_model->get_rincian($p, $id);
-        $data['sasaran']  = unserialize(SASARAN);
-        $data['func']     = "rincian/{$id}";
-        $data['per_page'] = $this->session->per_page;
-        $data['set_page'] = ['20', '50', '100'];
-        $data['cari']     = $this->session->cari;
+        $data                       = $this->suplemen_model->get_rincian($p, $id);
+        $data['sasaran']            = unserialize(SASARAN);
+        $data['func']               = "rincian/{$id}";
+        $data['per_page']           = $this->session->per_page;
+        $data['set_page']           = $this->_set_page;
+        $data['cari']               = $this->session->cari;
+        $data['sex']                = $this->session->sex ?? null;
+        $data['list_jenis_kelamin'] = $this->referensi_model->list_data('tweb_penduduk_sex');
+        $data['list_dusun']         = $this->wilayah_model->list_dusun();
+
+        foreach ($this->_list_session as $list) {
+            if (in_array($list, ['dusun', 'rw', 'rt'])) {
+                ${$list} = $this->session->{$list};
+            }
+        }
+        if (isset($dusun)) {
+            $data['dusun']   = $dusun;
+            $data['list_rw'] = $this->wilayah_model->list_rw($dusun);
+
+            if (isset($rw)) {
+                $data['rw']      = $rw;
+                $data['list_rt'] = $this->wilayah_model->list_rt($dusun, $rw);
+
+                if (isset($rt)) {
+                    $data['rt'] = $rt;
+                } else {
+                    $data['rt'] = '';
+                }
+            } else {
+                $data['rw'] = '';
+            }
+        } else {
+            $data['dusun'] = $data['rw'] = $data['rt'] = '';
+        }
 
         $this->render('suplemen/suplemen_anggota', $data);
     }
@@ -236,14 +271,20 @@ class Suplemen extends Admin_Controller
         redirect("{$this->controller}/rincian/{$id_suplemen}");
     }
 
+    public function hapus_terdata_all($id_suplemen)
+    {
+        $this->redirect_hak_akses('h');
+        $this->suplemen_model->hapus_terdata_all();
+
+        redirect("{$this->controller}/rincian/{$id_suplemen}");
+    }
+
     // $aksi = cetak/unduh
     public function dialog_daftar($id = 0, $aksi = '')
     {
-        $data['aksi']           = $aksi;
-        $data['pamong']         = $this->pamong_model->list_data();
-        $data['pamong_ttd']     = $this->pamong_model->get_ub();
-        $data['pamong_ketahui'] = $this->pamong_model->get_ttd();
-        $data['form_action']    = site_url("{$this->controller}/daftar/{$id}/{$aksi}");
+        $data                = $this->modal_penandatangan();
+        $data['aksi']        = $aksi;
+        $data['form_action'] = site_url("{$this->controller}/daftar/{$id}/{$aksi}");
 
         $this->load->view('global/ttd_pamong', $data);
     }
@@ -283,6 +324,10 @@ class Suplemen extends Admin_Controller
 
     public function ekspor($id = 0)
     {
+        $temp = $this->session->per_page;
+
+        $this->session->per_page = 0;
         $this->suplemen_model->ekspor($id);
+        $this->session->per_page = $temp;
     }
 }

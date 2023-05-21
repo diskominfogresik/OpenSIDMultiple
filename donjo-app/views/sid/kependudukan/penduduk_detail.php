@@ -1,14 +1,3 @@
-<?php
-/*
- * File ini:
- *
- * Views di Modul Kependudukan
- *
- * donjo-app/views/sid/kependudukan/penduduk_detail.php
- *
- */
-
-?>
 <!-- TODO: Pindahkan ke external css -->
 <style>
 	.table {
@@ -211,12 +200,6 @@
 															<th colspan="3" class="subtitle_head"><strong>ALAMAT</strong></th>
 														</tr>
 														<tr>
-															<td>Nomor Telepon</td><td >:</td><td><?= strtoupper($penduduk['telepon'])?></td>
-														</tr>
-														<tr>
-															<td>Alamat Email</td><td >:</td><td><?= strtoupper($penduduk['email'])?></td>
-														</tr>
-														<tr>
 															<td>Alamat</td><td >:</td><td><?= strtoupper($penduduk['alamat'])?></td>
 														</tr>
 														<tr>
@@ -227,6 +210,18 @@
 														</tr>
 														<tr>
 															<td>Alamat Sebelumnya</td><td >:</td><td><?= strtoupper($penduduk['alamat_sebelumnya'])?></td>
+														</tr>
+														<tr>
+															<td>Nomor Telepon</td><td >:</td><td><?= strtoupper($penduduk['telepon'])?></td>
+														</tr>
+														<tr>
+															<td>Alamat Email</td><td >:</td><td><?= strtoupper($penduduk['email'])?></td>
+														</tr>
+														<tr>
+															<td>Telegram</td><td >:</td><td><?= $penduduk['telegram']?></td>
+														</tr>
+														<tr>
+															<td>Cara Hubung Warga</td><td >:</td><td><?= $penduduk['hubung_warga']?></td>
 														</tr>
 														<tr>
 															<th colspan="3" class="subtitle_head"><strong>STATUS KAWIN</strong></th>
@@ -247,7 +242,7 @@
 																<td>Akta perceraian</td><td >:</td><td><?= strtoupper($penduduk['akta_perceraian'])?></td>
 															</tr>
 															<tr>
-																<td>Akta perceraian</td><td >:</td><td><?= strtoupper($penduduk['tanggalperceraian'])?></td>
+																<td>Tanggal perceraian</td><td >:</td><td><?= strtoupper($penduduk['tanggalperceraian'])?></td>
 															</tr>
 														<?php endif ?>
 														<tr>
@@ -269,7 +264,7 @@
 														<?php endif ?>
 														<?php if ($penduduk['id_sex'] == 2): ?>
 															<tr>
-																<td>Status Kehamilan</td><td >:</td><td><?= empty($penduduk['hamil']) ? 'TIDAK HAMIL' : 'HAMIL'?></td>
+																<td>Status Kehamilan</td><td >:</td><td><?= $penduduk['hamil'] == '1' ? 'HAMIL' : 'TIDAK HAMIL'?></td>
 															</tr>
 														<?php endif; ?>
 														<tr>

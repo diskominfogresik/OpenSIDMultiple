@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -101,7 +101,7 @@ class Wilayah_model extends MY_Model
 		(SELECT COUNT(p.id) FROM penduduk_hidup p WHERE p.id_cluster IN(SELECT id FROM tweb_wil_clusterdesa WHERE dusun = u.dusun)) AS jumlah_warga,
 		(SELECT COUNT(p.id) FROM penduduk_hidup p WHERE p.id_cluster IN(SELECT id FROM tweb_wil_clusterdesa WHERE dusun = u.dusun) AND p.sex = 1) AS jumlah_warga_l,
 		(SELECT COUNT(p.id) FROM penduduk_hidup p WHERE p.id_cluster IN(SELECT id FROM tweb_wil_clusterdesa WHERE dusun = u.dusun) AND p.sex = 2) AS jumlah_warga_p,
-		(SELECT COUNT(p.id) FROM keluarga_aktif k inner join penduduk_hidup p ON k.nik_kepala = p.id  WHERE p.id_cluster IN(SELECT id FROM tweb_wil_clusterdesa WHERE dusun = u.dusun) AND p.kk_level = 1) AS jumlah_kk ";
+		(SELECT COUNT(p.id) FROM keluarga_aktif k inner join penduduk_hidup p ON k.nik_kepala = p.id  WHERE p.id_cluster IN(SELECT id FROM tweb_wil_clusterdesa WHERE dusun = u.dusun) AND p.kk_level = 1) AS jumlah_kk";
         $sql = $select_sql . $this->list_data_sql();
         $sql .= 'ORDER BY`u`.`urut` ASC';
         $sql .= $paging_sql;
@@ -113,7 +113,11 @@ class Wilayah_model extends MY_Model
         $j = $offset;
 
         for ($i = 0; $i < count($data); $i++) {
-            $data[$i]['no'] = $j + 1;
+            $data[$i]['no']        = $j + 1;
+            $data[$i]['deletable'] = 1;
+            if ($data[$i]['jumlah_warga'] > 0 || $data[$i]['jumlah_kk'] > 0) {
+                $data[$i]['deletable'] = 0;
+            }
             $j++;
         }
 
@@ -203,8 +207,8 @@ class Wilayah_model extends MY_Model
         if (empty((int) $data['id_kepala'])) {
             unset($data['id_kepala']);
         }
-        $data['dusun'] = nama_terbatas($data['dusun']) ?: 0;
-        $data['rw']    = nama_terbatas($data['rw']) ?: 0;
+        $data['dusun'] = nama_terbatas(trim(str_ireplace('DUSUN', '', $data['dusun'])));
+        $data['rw']    = nama_terbatas(trim(str_ireplace('RW', '', $data['rw']))) ?: 0;
         $data['rt']    = bilangan($data['rt']) ?: 0;
 
         return $data;
@@ -276,14 +280,42 @@ class Wilayah_model extends MY_Model
 
         switch ($tipe) {
             case 'dusun':
+                // cek data
+                $id_cluster = $this->db->select('id')->where('rw', $rw)->where('dusun', $dusun)->get('tweb_wil_clusterdesa')->result_array();
+                $id_cluster = array_map(static fn ($value) => $value['id'], $id_cluster);
+
+                $penduduk = $this->db->select("count('id') as jmlh")->where_in('p.id_cluster', $id_cluster)->get('tweb_penduduk as p')->row();
+                $keluarga = $this->db->select("count('id') as jmlh")->where_in('k.id_cluster', $id_cluster)->get('tweb_keluarga as k')->row();
+
+                if ($penduduk->jmlh + $keluarga->jmlh != 0) {
+                    return session_error('Data dusun tidak dapat dihapus, data sudah tersedia di Penduduk atau Keluarga.');
+                }
+
                 $this->db->where('dusun', $dusun);
                 break; //dusun
 
             case 'rw':
+                $id_cluster = $this->db->select('id')->where('rw', $rw)->where('dusun', $dusun)->get('tweb_wil_clusterdesa')->result_array();
+                $id_cluster = array_map(static fn ($value) => $value['id'], $id_cluster);
+
+                $penduduk = $this->db->select("count('id') as jmlh")->where_in('p.id_cluster', $id_cluster)->get('tweb_penduduk as p')->row();
+                $keluarga = $this->db->select("count('id') as jmlh")->where_in('k.id_cluster', $id_cluster)->get('tweb_keluarga as k')->row();
+
+                if ($penduduk->jmlh + $keluarga->jmlh != 0) {
+                    return session_error('Data dusun tidak dapat dihapus, data sudah tersedia di Penduduk atau Keluarga.');
+                }
+
                 $this->db->where('rw', $rw)->where('dusun', $dusun);
                 break; //rw
 
             default:
+                $penduduk = $this->db->select("count('id') as jmlh")->where('p.id_cluster', $id)->get('tweb_penduduk as p')->row();
+                $keluarga = $this->db->select("count('id') as jmlh")->where('k.id_cluster', $id)->get('tweb_keluarga as k')->row();
+
+                if ($penduduk->jmlh + $keluarga->jmlh != 0) {
+                    return session_error('Data dusun tidak dapat dihapus, data sudah tersedia di Penduduk atau Keluarga.');
+                }
+
                 $this->db->where('id', $id);
                 break; //rt
         }
@@ -320,7 +352,7 @@ class Wilayah_model extends MY_Model
 		(SELECT COUNT(p.id) FROM penduduk_hidup p WHERE p.id_cluster IN(SELECT id FROM tweb_wil_clusterdesa WHERE dusun = '{$dusun}' AND rw = u.rw)) AS jumlah_warga,
 		(SELECT COUNT(p.id) FROM penduduk_hidup p WHERE p.id_cluster IN(SELECT id FROM tweb_wil_clusterdesa WHERE dusun = '{$dusun}' AND rw = u.rw) AND p.sex = 1) AS jumlah_warga_l,
 		(SELECT COUNT(p.id) FROM penduduk_hidup p WHERE p.id_cluster IN(SELECT id FROM tweb_wil_clusterdesa WHERE dusun = '{$dusun}' AND rw = u.rw) AND p.sex = 2) AS jumlah_warga_p,
-		(SELECT COUNT(p.id) FROM keluarga_aktif k inner join penduduk_hidup p ON k.nik_kepala=p.id  WHERE p.id_cluster IN(SELECT id FROM tweb_wil_clusterdesa WHERE dusun = '{$dusun}' AND rw = u.rw) AND p.kk_level = 1) AS jumlah_kk ");
+		(SELECT COUNT(p.id) FROM keluarga_aktif k inner join penduduk_hidup p ON k.nik_kepala=p.id  WHERE p.id_cluster IN(SELECT id FROM tweb_wil_clusterdesa WHERE dusun = '{$dusun}' AND rw = u.rw) AND p.kk_level = 1) AS jumlah_kk");
 
         $this->db
             ->from('tweb_wil_clusterdesa u')
@@ -340,7 +372,11 @@ class Wilayah_model extends MY_Model
         $j = $offset;
 
         for ($i = 0; $i < count($data); $i++) {
-            $data[$i]['no'] = $j + 1;
+            $data[$i]['no']        = $j + 1;
+            $data[$i]['deletable'] = 1;
+            if ($data[$i]['jumlah_warga'] > 0 || $data[$i]['jumlah_kk'] > 0) {
+                $data[$i]['deletable'] = 0;
+            }
             $j++;
         }
 
@@ -436,7 +472,11 @@ class Wilayah_model extends MY_Model
         $j = $offset;
 
         for ($i = 0; $i < count($data); $i++) {
-            $data[$i]['no'] = $j + 1;
+            $data[$i]['no']        = $j + 1;
+            $data[$i]['deletable'] = 1;
+            if ($data[$i]['jumlah_warga'] > 0 || $data[$i]['jumlah_kk'] > 0) {
+                $data[$i]['deletable'] = 0;
+            }
             $j++;
         }
 
@@ -797,10 +837,12 @@ class Wilayah_model extends MY_Model
 
     public function kosongkan_path($id)
     {
-        $this->db
+        $outp = $this->db
             ->set('path', null)
             ->where('id', $id)
             ->update('tweb_wil_clusterdesa');
+
+        status_sukses($outp); //Tampilkan Pesan
     }
 
     private function update_urut($urut = 1, $id = 1)

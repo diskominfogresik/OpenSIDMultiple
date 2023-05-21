@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -104,13 +104,17 @@ class Plan_area_model extends MY_Model
     public function list_data($o = 0, $offset = 0, $limit = null)
     {
         switch ($o) {
-            case 1: $this->db->order_by('nama'); break;
+            case 1: $this->db->order_by('nama');
+                break;
 
-            case 2: $this->db->order_by('nama', 'DESC'); break;
+            case 2: $this->db->order_by('nama', 'DESC');
+                break;
 
-            case 3: $this->db->order_by('enabled'); break;
+            case 3: $this->db->order_by('enabled');
+                break;
 
-            case 4: $this->db->order_by('enabled', 'DESC'); break;
+            case 4: $this->db->order_by('enabled', 'DESC');
+                break;
 
             default: $this->db->order_by('id');
         }
@@ -140,9 +144,9 @@ class Plan_area_model extends MY_Model
     private function validasi($post)
     {
         $data['nama']        = nomor_surat_keputusan($post['nama']);
-        $data['ref_polygon'] = $post['ref_polygon'];
+        $data['ref_polygon'] = bilangan($post['ref_polygon']);
         $data['desk']        = htmlentities($post['desk']);
-        $data['enabled']     = $post['enabled'];
+        $data['enabled']     = bilangan($post['enabled']);
 
         return $data;
     }
@@ -249,22 +253,32 @@ class Plan_area_model extends MY_Model
     {
         $data = $this->input->post();
         $this->db->where('id', $id);
-        $outp = $this->db->update('area', $data);
+        if ($data['path'] !== '[[]]') {
+            $outp = $this->db->update('area', $data);
+        } else {
+            $outp = '';
+        }
 
-        status_sukses($outp); //Tampilkan Pesan
+        status_sukses($outp, $gagal_saja = false, $msg = 'titik koordinat area harus diisi'); //Tampilkan Pesan
     }
 
-    public function list_area()
+    public function list_area($status = null)
     {
+        if (null !== $status) {
+            $this->db
+                ->where('l.enabled', $status)
+                ->where('p.enabled', $status)
+                ->where('m.enabled', $status);
+        }
+
         return $this->db
             ->select('l.*, p.nama AS kategori, m.nama AS jenis, p.simbol AS simbol, p.color AS color')
             ->from('area l')
             ->join('polygon p', 'l.ref_polygon = p.id', 'left')
             ->join('polygon m', 'p.parrent = m.id', 'left')
-            ->where('l.enabled', 1)
-            ->where('p.enabled', 1)
-            ->where('m.enabled', 1)
-            ->get()->result_array();
+            ->where('l.ref_polygon !=', 0)
+            ->get()
+            ->result_array();
     }
 
     public function kosongkan_path($id)

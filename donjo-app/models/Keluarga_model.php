@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,11 +29,14 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
+
+use App\Models\Config;
+use App\Models\LogKeluarga;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -42,7 +45,7 @@ class Keluarga_model extends MY_Model
     public function __construct()
     {
         parent::__construct();
-        $this->load->model(['program_bantuan_model', 'penduduk_model', 'web_dokumen_model', 'config_model']);
+        $this->load->model(['program_bantuan_model', 'penduduk_model', 'web_dokumen_model']);
     }
 
     public function autocomplete($cari = '')
@@ -141,15 +144,24 @@ class Keluarga_model extends MY_Model
                     ->join('program_peserta bt', "bt.peserta = u.no_kk and bt.program_id = {$program_id}", 'left')
                     ->where('bt.id is null');
             } else {
+                if (isset($this->session->status)) {
+                    $status = $this->session->status;
+                    $this->db->join('program_peserta bt', "bt.peserta = u.no_kk AND bt.program_id in (SELECT pro.id from program AS pro WHERE pro.`status` = {$status} and pro.sasaran = 2)", 'left');
+                } else {
+                    $this->db->join('program_peserta bt', 'bt.peserta = u.no_kk', 'left');
+                }
+
                 // Bukan penerima bantuan apa pun
-                $this->db
-                    ->join('program_peserta bt', 'bt.peserta = u.no_kk', 'left')
-                    ->where('bt.id is null');
+                $this->db->where('bt.id is null');
             }
         } elseif ($bantuan_keluarga == JUMLAH && ! $this->session->program_bantuan) {
-            // Penerima bantuan mana pun
-            $this->db
-                ->where('u.no_kk IN (select peserta from program_peserta)');
+            if (isset($this->session->status)) {
+                $status = $this->session->status;
+                $this->db->join('program_peserta bt', "bt.peserta = u.no_kk AND bt.program_id in (SELECT pro.id from program AS pro WHERE pro.`status` = {$status} and pro.sasaran = 2)", 'left')->where('bt.id is not null');
+            } else {
+                // Penerima bantuan mana pun
+                $this->db->where('u.no_kk IN (select peserta from program_peserta)');
+            }
         }
     }
 
@@ -220,19 +232,41 @@ class Keluarga_model extends MY_Model
         $this->list_data_sql();
 
         switch ($o) {
-            case 1: $this->db->order_by('u.no_kk'); break;
+            case 1:
+                $this->db->order_by('u.no_kk');
+                break;
 
-            case 2: $this->db->order_by('u.no_kk DESC'); break;
+            case 2:
+                $this->db->order_by('u.no_kk DESC');
+                break;
 
-            case 3: $this->db->order_by('kepala_kk'); break;
+            case 3:
+                $this->db->order_by('kepala_kk');
+                break;
 
-            case 4: $this->db->order_by('kepala_kk DESC'); break;
+            case 4:
+                $this->db->order_by('kepala_kk DESC');
+                break;
 
-            case 5: $this->db->order_by('u.tgl_daftar'); break;
+            case 5:
+                $this->db->order_by('u.tgl_daftar');
+                break;
 
-            case 6: $this->db->order_by('u.tgl_daftar DESC'); break;
+            case 6:
+                $this->db->order_by('u.tgl_daftar DESC');
+                break;
 
-            default:$this->db->order_by('u.no_kk DESC');
+            case 7:
+                $this->db->order_by('u.tgl_cetak_kk');
+                break;
+
+            case 8:
+                $this->db->order_by('u.tgl_cetak_kk DESC');
+                break;
+
+            default:
+                $this->db->order_by('u.no_kk DESC');
+                break;
         }
         $query_dasar = $this->db->get_compiled_select();
 
@@ -255,11 +289,20 @@ class Keluarga_model extends MY_Model
                 $data[$i]['jumlah_anggota'] = '-';
             }
 
-            if ($data[$i]['sex'] == 1) {
-                $data[$i]['sex'] = 'LAKI-LAKI';
-            } else {
-                $data[$i]['sex'] = 'PEREMPUAN';
+            switch ($data[$i]['sex']) {
+                case 1:
+                    $data[$i]['sex'] = 'LAKI-LAKI';
+                    break;
+
+                case 2:
+                    $data[$i]['sex'] = 'PEREMPUAN';
+                    break;
+
+                default:
+                    $data[$i]['sex'] = '-';
+                    break;
             }
+
             $data[$i]['boleh_hapus'] = $this->cek_boleh_hapus($data[$i]['id']);
             $j++;
         }
@@ -281,9 +324,7 @@ class Keluarga_model extends MY_Model
             return;
         }
 
-        $pend = $this->db->select('alamat_sekarang, id_cluster')->
-            where('id', $data['nik_kepala'])->
-            get('tweb_penduduk')->row_array();
+        $pend = $this->db->select('alamat_sekarang, id_cluster')->where('id', $data['nik_kepala'])->get('tweb_penduduk')->row_array();
         // Gunakan alamat penduduk sebagai alamat keluarga
         $data['alamat']     = $pend['alamat_sekarang'];
         $data['id_cluster'] = $pend['id_cluster'];
@@ -308,7 +349,7 @@ class Keluarga_model extends MY_Model
         $outp              = $outp && $this->db->insert('log_perubahan_penduduk', $log);
 
         // Untuk statistik perkembangan keluarga
-        $this->log_keluarga($kk_id, $data['nik_kepala'], 1);
+        $this->log_keluarga($kk_id, LogKeluarga::KELUARGA_BARU);
 
         status_sukses($outp); //Tampilkan Pesan
     }
@@ -376,7 +417,7 @@ class Keluarga_model extends MY_Model
         $lokasi_file = $_FILES['foto']['tmp_name'];
         $tipe_file   = $_FILES['foto']['type'];
         $nama_file   = $_FILES['foto']['name'];
-        $nama_file   = str_replace(' ', '-', $nama_file); 	 // normalkan nama file
+        $nama_file   = str_replace(' ', '-', $nama_file);      // normalkan nama file
         $old_foto    = '';
         if (! empty($lokasi_file)) {
             if ($tipe_file != 'image/jpeg' && $tipe_file != 'image/pjpeg' && $tipe_file != 'image/png') {
@@ -446,7 +487,7 @@ class Keluarga_model extends MY_Model
         $outp              = $this->db->insert('log_perubahan_penduduk', $log);
 
         // Untuk statistik perkembangan keluarga
-        $this->log_keluarga($kk_id, $data2['nik_kepala'], 1);
+        $this->log_keluarga($kk_id, LogKeluarga::KELUARGA_BARU_DATANG);
 
         status_sukses($outp); //Tampilkan Pesan
     }
@@ -530,7 +571,7 @@ class Keluarga_model extends MY_Model
         $outp = $outp && $this->program_bantuan_model->hapus_peserta_dari_sasaran($keluarga->no_kk, 2);
 
         // Untuk statistik perkembangan keluarga
-        $this->log_keluarga($id, $nik_kepala, 13);
+        $this->log_keluarga($id, LogKeluarga::KELUARGA_HAPUS);
 
         status_sukses($outp, $gagal_saja = true); //Tampilkan Pesan
     }
@@ -546,35 +587,10 @@ class Keluarga_model extends MY_Model
         }
     }
 
-    /* 	Untuk statistik perkembangan keluarga
-            id_peristiwa:
-                 1 - keluarga baru
-                 2 - kepala keluarga status dasar 'mati'
-                 3 - kepala keluarga status dasar 'pindah'
-                 4 - kepala keluarga status dasar 'hilang'
-                 6 - kepala keluarga status dasar 'pergi' (seharusnya tidak ada)
-                 11- kepala keluarga status dasar 'tidak valid' (seharusnya tidak ada)
-                 12- anggota keluarga keluar atau pecah dari keluarga
-                 13 - keluarga dihapus
-                 14 - kepala keluarga status dasar kembali 'hidup' (salah mengisi di log_penduduk)
-    */
-    /**
-     * @param $id, id_kk = id dari tweb_keluarga
-     * @param $kk, id dari kepala keluarga di tweb_penduduk
-     * @param mixed      $id_peristiwa
-     * @param mixed|null $id_pend
-     * @param mixed|null $id_log_penduduk
-     */
-    public function log_keluarga($id, $kk, $id_peristiwa, $id_pend = null, $id_log_penduduk = null)
+    public function log_keluarga($id = null, $id_peristiwa = 1, $id_pend = null, $id_log_penduduk = null)
     {
-        $penduduk = $this->db
-            ->select('sex')
-            ->where('id', $kk)
-            ->get('tweb_penduduk')
-            ->row_array();
         $log_keluarga = [
             'id_kk'           => $id,
-            'kk_sex'          => $penduduk['sex'],
             'id_peristiwa'    => $id_peristiwa,
             'tgl_peristiwa'   => date('Y-m-d H:i:s'),
             'id_pend'         => $id_pend,
@@ -582,8 +598,9 @@ class Keluarga_model extends MY_Model
             'updated_by'      => $this->session->user,
         ];
 
-        $outp = $this->db->insert('log_keluarga', $log_keluarga);
-        status_sukses($outp); //Tampilkan Pesan
+        $outp = LogKeluarga::insert($log_keluarga);
+
+        status_sukses($outp);
     }
 
     public function add_anggota($id = 0)
@@ -672,7 +689,7 @@ class Keluarga_model extends MY_Model
         // hapus dokumen bersama dengan kepala KK sebelumnya
         $this->web_dokumen_model->hard_delete_dokumen_bersama($id);
         // catat peristiwa keluar/pecah di log_keluarga
-        $this->log_keluarga($kel->id, $kel->nik_kepala, 12, $id);
+        $this->log_keluarga($kel->id, LogKeluarga::ANGGOTA_KELUARGA_PECAH, $id);
     }
 
     public function rem_all_anggota($kk)
@@ -716,7 +733,7 @@ class Keluarga_model extends MY_Model
         $kk['id_kk']      = $id;
         $kk['main']       = $this->keluarga_model->list_anggota($id);
         $kk['kepala_kk']  = $this->keluarga_model->get_kepala_kk($id);
-        $kk['desa']       = $this->config_model->get_data();
+        $kk['desa']       = Config::first();
         $data['all_kk'][] = $kk;
 
         return $data;
@@ -751,6 +768,7 @@ class Keluarga_model extends MY_Model
             ->from('penduduk_hidup u')
             ->join('tweb_wil_clusterdesa w', 'u.id_cluster = w.id', 'left')
             ->where('id_kk', 0)
+            ->where('status', 1)
             ->get()->result_array();
     }
 
@@ -758,39 +776,46 @@ class Keluarga_model extends MY_Model
     // $options['pilih'] untuk membatasi ke nik tertentu saja
     public function list_anggota($id = 0, $options = ['dengan_kk' => true], $nik_sementara = false)
     {
-        $sql = "SELECT u.*, u.sex as sex_id, u.status_kawin as status_kawin_id,
-            DATE_FORMAT(FROM_DAYS(TO_DAYS(NOW())-TO_DAYS(`tanggallahir`)), '%Y')+0 AS umur,
-            (CASE
-                WHEN u.status_kawin IS NULL THEN ''
-				WHEN u.status_kawin <> 2 THEN w.nama
-				ELSE
-					CASE
-                        WHEN u.akta_perkawinan IS NULL THEN 'KAWIN BELUM TERCATAT'
-						ELSE 'KAWIN TERCATAT'
-					END
-				END) AS status_kawin,
-			b.dusun, b.rw, b.rt, x.nama as sex, u.kk_level, a.nama as agama, d.nama as pendidikan,j.nama as pekerjaan, f.nama as warganegara, g.nama as golongan_darah, h.nama AS hubungan, k.alamat
-			FROM tweb_penduduk u
-			LEFT JOIN tweb_penduduk_agama a ON u.agama_id = a.id
-			LEFT JOIN tweb_penduduk_pekerjaan j ON u.pekerjaan_id = j.id
-			LEFT JOIN tweb_penduduk_pendidikan_kk d ON u.pendidikan_kk_id = d.id
-			LEFT JOIN tweb_penduduk_warganegara f ON u.warganegara_id = f.id
-			LEFT JOIN tweb_golongan_darah g ON u.golongan_darah_id = g.id
-			LEFT JOIN tweb_penduduk_kawin w ON u.status_kawin = w.id
-			LEFT JOIN tweb_penduduk_sex x ON u.sex = x.id
-			LEFT JOIN tweb_penduduk_hubungan h ON u.kk_level = h.id
-			LEFT JOIN tweb_wil_clusterdesa b ON u.id_cluster = b.id
-			LEFT JOIN tweb_keluarga k ON u.id_kk = k.id
-			WHERE status = 1 AND status_dasar = 1 AND id_kk = ?";
+        $this->db
+            ->select('u.*')
+            ->select('u.sex as sex_id')
+            ->select('u.status_kawin as status_kawin_id')
+            ->select("DATE_FORMAT(FROM_DAYS(TO_DAYS(NOW()) - TO_DAYS(`tanggallahir`)), '%Y')+0 as umur")
+            ->select("
+                (CASE
+                    WHEN u.status_kawin IS NULL THEN ''
+                    WHEN u.status_kawin <> 2 THEN w.nama
+                    ELSE
+                        CASE
+                            WHEN (u.akta_perkawinan IS NULL OR u.akta_perkawinan = '') AND u.tanggalperkawinan IS NULL THEN 'KAWIN BELUM TERCATAT'
+                            ELSE 'KAWIN TERCATAT'
+                        END
+                END) as status_kawin
+            ")
+            ->select(['b.dusun', 'b.rw', 'b.rt', 'x.nama as sex', 'u.kk_level', 'a.nama as agama', 'd.nama as pendidikan', 'j.nama as pekerjaan', 'f.nama as warganegara', 'g.nama as golongan_darah', 'h.nama AS hubungan', 'k.alamat', 'tc.nama AS cacat'])
+            ->from('tweb_penduduk u')
+            ->join('tweb_penduduk_agama a', 'u.agama_id = a.id', 'left')
+            ->join('tweb_penduduk_pekerjaan j', 'u.pekerjaan_id = j.id', 'left')
+            ->join('tweb_penduduk_pendidikan_kk d', 'u.pendidikan_kk_id = d.id', 'left')
+            ->join('tweb_penduduk_warganegara f', 'u.warganegara_id = f.id', 'left')
+            ->join('tweb_golongan_darah g', 'u.golongan_darah_id = g.id', 'left')
+            ->join('tweb_penduduk_kawin w', 'u.status_kawin = w.id', 'left')
+            ->join('tweb_penduduk_sex x', 'u.sex = x.id', 'left')
+            ->join('tweb_cacat tc', 'u.cacat_id = tc.id', 'left')
+            ->join('tweb_penduduk_hubungan h', 'u.kk_level = h.id', 'left')
+            ->join('tweb_wil_clusterdesa b', 'u.id_cluster = b.id', 'left')
+            ->join('tweb_keluarga k', 'u.id_kk = k.id', 'left')
+            ->where(['status_dasar' => 1, 'id_kk' => $id]);
+
         if ($options['dengan_kk'] !== null && ! $options['dengan_kk']) {
-            $sql .= ' AND kk_level <> 1';
+            $this->db->where('kk_level <> 1');
         }
+
         if (! empty($options['pilih'])) {
-            $sql .= ' AND u.nik IN (' . $options['pilih'] . ')';
+            $this->db->where_in('u.nik', $options['pilih']);
         }
-        $sql .= ' ORDER BY kk_level, tanggallahir';
-        $query = $this->db->query($sql, [$id]);
-        $data  = $query->result_array();
+
+        $data = $this->db->order_by('kk_level, tanggallahir')->get()->result_array();
 
         if ($nik_sementara) {
             for ($i = 0; $i < count($data); $i++) {
@@ -894,7 +919,7 @@ class Keluarga_model extends MY_Model
         $lokasi_file = $_FILES['foto']['tmp_name'];
         $tipe_file   = $_FILES['foto']['type'];
         $nama_file   = $_FILES['foto']['name'];
-        $nama_file   = str_replace(' ', '-', $nama_file); 	 // normalkan nama file
+        $nama_file   = str_replace(' ', '-', $nama_file);      // normalkan nama file
         if (! empty($lokasi_file)) {
             if ($tipe_file != 'image/jpeg' && $tipe_file != 'image/pjpeg' && $tipe_file != 'image/png') {
                 unset($data['foto']);
@@ -1028,8 +1053,7 @@ class Keluarga_model extends MY_Model
 
     public function pindah_keluarga($id_kk, $id_cluster)
     {
-        $this->db->where('id', $id_kk)->
-            update('tweb_keluarga', ['id_cluster' => $id_cluster, 'updated_by' => $this->session->user]);
+        $this->db->where('id', $id_kk)->update('tweb_keluarga', ['id_cluster' => $id_cluster, 'updated_by' => $this->session->user]);
         $this->pindah_anggota_keluarga($id_kk, $id_cluster);
     }
 
@@ -1109,7 +1133,7 @@ class Keluarga_model extends MY_Model
     public function get_data_unduh_kk($id)
     {
         $data              = [];
-        $data['desa']      = $this->config_model->get_data();
+        $data['desa']      = Config::first();
         $data['id_kk']     = $id;
         $data['main']      = $this->list_anggota($id);
         $data['kepala_kk'] = $this->get_kepala_kk($id);
@@ -1253,9 +1277,7 @@ class Keluarga_model extends MY_Model
             ->row()->digit ?? 0;
 
         // No_kk Sementara menggunakan format 0[kode-desa][nomor-urut]
-        $desa = $this->config_model->get_data();
-
-        return '0' . $desa['kode_desa'] . sprintf('%05d', $digit + 1);
+        return '0' . Config::first()->kode_desa . sprintf('%05d', $digit + 1);
     }
 
     public function pecah_semua($id, $post)
@@ -1274,7 +1296,7 @@ class Keluarga_model extends MY_Model
         $hasil             = $this->db->insert('tweb_keluarga', $kel);
         $kk_id             = $this->db->insert_id();
         // Untuk statistik perkembangan keluarga
-        $this->log_keluarga($kk_id, $kel['nik_kepala'], 1);
+        $this->log_keluarga($kk_id, LogKeluarga::KELUARGA_BARU);
 
         // Masukkan semua anggota lama
         $list_anggota = $this->db

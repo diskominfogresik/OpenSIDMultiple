@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -46,11 +46,9 @@ class Migrasi_fitur_premium_2109 extends MY_Model
         // Jalankan migrasi sebelumnya
         $hasil = $hasil && $this->jalankan_migrasi('migrasi_fitur_premium_2108');
 
-        $this->cache->hapus_cache_untuk_semua('status_langganan');
+        // $this->cache->hapus_cache_untuk_semua('status_langganan');
         $hasil = $hasil && $this->migrasi_2021080771($hasil);
         $hasil = $hasil && $this->migrasi_2021081851($hasil);
-        $hasil = $hasil && $this->migrasi_2021082051($hasil);
-        $hasil = $hasil && $this->migrasi_2021082052($hasil);
         $hasil = $hasil && $this->migrasi_2021082151($hasil);
         $hasil = $hasil && $this->migrasi_2021082871($hasil);
         $hasil = $hasil && $this->migrasi_2021082971($hasil);
@@ -84,28 +82,6 @@ class Migrasi_fitur_premium_2109 extends MY_Model
         return $hasil;
     }
 
-    protected function migrasi_2021082051($hasil)
-    {
-        // Hapus file .htaccess
-        $file = LOKASI_ARSIP . '.htaccess';
-        if (file_exists($file)) {
-            $hasil = $hasil && unlink($file);
-        }
-
-        return $hasil;
-    }
-
-    protected function migrasi_2021082052($hasil)
-    {
-        // Hapus file .htaccess
-        $file = LOKASI_DOKUMEN . '.htaccess';
-        if (file_exists($file)) {
-            $hasil = $hasil && unlink($file);
-        }
-
-        return $hasil;
-    }
-
     protected function migrasi_2021082151($hasil)
     {
         $this->load->model('penduduk_model');
@@ -129,7 +105,7 @@ class Migrasi_fitur_premium_2109 extends MY_Model
             }
         }
 
-        return $hasil && $this->tambah_indeks('tweb_penduduk', 'nik');
+        return $hasil && $this->tambahIndeks('tweb_penduduk', 'nik');
     }
 
     protected function migrasi_2021082871($hasil)
@@ -156,10 +132,6 @@ class Migrasi_fitur_premium_2109 extends MY_Model
             'parent' => 327,
         ]);
 
-        // Hapus cache menu navigasi
-        $this->load->driver('cache');
-        $this->cache->hapus_cache_untuk_semua('_cache_modul');
-
         if (! $this->db->field_exists('tipe', 'kelompok')) {
             $hasil = $hasil && $this->dbforge->add_column('kelompok', ['tipe' => ['type' => 'VARCHAR', 'constraint' => '100', 'default' => 'kelompok']]);
         }
@@ -179,15 +151,7 @@ class Migrasi_fitur_premium_2109 extends MY_Model
             $hasil = $hasil && $this->dbforge->add_column('kelompok_master', ['tipe' => ['type' => 'VARCHAR', 'constraint' => '100', 'default' => 'kelompok']]);
         }
 
-        // Tambah hak ases group operator
-        $query = '
-            INSERT INTO grup_akses (`id_grup`, `id_modul`, `akses`) VALUES
-            -- Operator --
-            (2,327,3), -- Lembaga --
-            (2,328,3) -- Kategori Lembaga --
-        ';
-
-        return $hasil && $this->db->query($query);
+        return $hasil;
     }
 
     protected function migrasi_2021082971($hasil)
@@ -237,14 +201,7 @@ class Migrasi_fitur_premium_2109 extends MY_Model
             $hasil = $hasil && $this->dbforge->add_column('pembangunan', ['manfaat' => ['type' => 'VARCHAR', 'constraint' => '100', 'null' => true]]);
         }
 
-        // Tambah hak ases group operator
-        $query = '
-            INSERT INTO grup_akses (`id_grup`, `id_modul`, `akses`) VALUES
-            -- Operator --
-            (2,305,3) -- Bumindes Rencana Kerja Pembangunan --
-        ';
-
-        return $hasil && $this->db->query($query);
+        return $hasil;
     }
 
     protected function migrasi_2021082951($hasil)

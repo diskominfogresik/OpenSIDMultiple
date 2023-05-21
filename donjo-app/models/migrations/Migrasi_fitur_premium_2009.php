@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -125,20 +125,9 @@ class Migrasi_fitur_premium_2009 extends MY_model
         ];
 
         foreach ($menu as $modul) {
-            $sql = $this->db->insert_string('setting_modul', $modul);
-            $sql .= ' ON DUPLICATE KEY UPDATE
-            id = VALUES(id),
-            modul = VALUES(modul),
-            url = VALUES(url),
-            aktif = VALUES(aktif),
-            ikon = VALUES(ikon),
-            urut = VALUES(urut),
-            level = VALUES(level),
-            hidden = VALUES(hidden),
-            ikon_kecil = VALUES(ikon_kecil),
-            parent = VALUES(parent)';
-            $hasil = $hasil && $this->db->query($sql);
+            $hasil = $hasil && $this->tambah_modul($modul);
         }
+
         // Menu parent Buku Administrasi Desa. END
         // Dokumen tidak harus ada file
         $hasil = $hasil && $this->db->query('ALTER TABLE dokumen MODIFY satuan VARCHAR(200) NULL DEFAULT NULL;');
@@ -174,7 +163,7 @@ class Migrasi_fitur_premium_2009 extends MY_model
             $hasil = $hasil && $this->dbforge->add_column('surat_keluar', 'updated_by int(11) NOT NULL');
         }
         // Menu permohonan surat untuk operator
-        $modul = [
+        return $hasil && $this->tambah_modul([
             'id'         => '310',
             'modul'      => 'Buku Eskpedisi',
             'url'        => 'ekspedisi/clear',
@@ -184,11 +173,8 @@ class Migrasi_fitur_premium_2009 extends MY_model
             'level'      => '0',
             'parent'     => '302',
             'hidden'     => '0',
-            'ikon_kecil' => '',
-        ];
-        $sql = $this->db->insert_string('setting_modul', $modul) . ' ON DUPLICATE KEY UPDATE modul = VALUES(modul), url = VALUES(url), ikon = VALUES(ikon), parent = VALUES(parent)';
-
-        return $hasil && $this->db->query($sql);
+            'ikon_kecil' => 'fa-files-o',
+        ]);
     }
 
     private function tambah_kolom_pemerintahan_desa($hasil)

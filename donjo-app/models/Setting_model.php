@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,11 +29,14 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
+
+use App\Models\RefJabatan;
+use Illuminate\Support\Facades\Schema;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -49,10 +52,13 @@ define('EKSTENSI_WAJIB', serialize([
     'tidy',
     'zip',
 ]));
-define('VERSI_PHP_MINIMAL', '7.2.0');
-define('VERSI_MYSQL_MINIMAL', '5.6.5');
+define('minPhpVersion', '7.3.0');
+define('maxPhpVersion', '8.0.0');
+define('minMySqlVersion', '5.6.0');
+define('maxMySqlVersion', '8.0.0');
+define('minMariaDBVersion', '10.3.0');
 
-class Setting_model extends CI_Model
+class Setting_model extends MY_Model
 {
     public function __construct()
     {
@@ -82,6 +88,7 @@ class Setting_model extends CI_Model
         }
         $CI->setting      = (object) $pre;
         $CI->list_setting = $pr; // Untuk tampilan daftar setting
+
         $this->apply_setting();
     }
 
@@ -89,20 +96,20 @@ class Setting_model extends CI_Model
     private function apply_setting()
     {
         //  https://stackoverflow.com/questions/16765158/date-it-is-not-safe-to-rely-on-the-systems-timezone-settings
-        date_default_timezone_set($this->setting->timezone); //ganti ke timezone lokal
+        date_default_timezone_set($this->setting->timezone); // ganti ke timezone lokal
+
         // Ambil google api key dari desa/config/config.php kalau tidak ada di database
         if (empty($this->setting->mapbox_key)) {
             $this->setting->mapbox_key = config_item('mapbox_key');
         }
-        // Ambil token tracksid dari desa/config/config.php kalau tidak ada di database
-        if (empty($this->setting->token_opensid)) {
-            $this->setting->token_opensid = config_item('token_opensid');
-        }
 
         // Ganti token_layanan sesuai config untuk development untuk mempermudah rilis
-        if ((ENVIRONMENT == 'development') && ! empty(config_item('token_layanan'))) {
+        if ((ENVIRONMENT == 'development') || config_item('token_layanan')) {
             $this->setting->layanan_opendesa_token = config_item('token_layanan');
         }
+
+        // Pengaturan sebutan sekdes
+        $this->setting->sebutan_sekretaris_desa = (Schema::hasTable('ref_jabatan')) ? RefJabatan::find(2)->nama : '';
 
         $this->setting->user_admin = config_item('user_admin');
         // Kalau folder tema ubahan tidak ditemukan, ganti dengan tema default
@@ -110,9 +117,14 @@ class Setting_model extends CI_Model
         if ($pos !== false) {
             $folder = FCPATH . '/desa/themes/' . substr($this->setting->web_theme, $pos + strlen('desa/'));
             if (! file_exists($folder)) {
-                $this->setting->web_theme = 'default';
+                $this->setting->web_theme = 'esensi';
             }
         }
+
+        // Sebutan kepala desa diambil dari tabel ref_jabatan dengan id = 1
+        // Diperlukan karena masih banyak yang menggunakan variabel ini, hapus jika tidak digunakan lagi
+        $this->setting->sebutan_kepala_desa = (Schema::hasTable('ref_jabatan')) ? RefJabatan::find(1)->nama : '';
+
         $this->load->model('database_model');
         $this->database_model->cek_migrasi();
     }
@@ -125,7 +137,17 @@ class Setting_model extends CI_Model
                 if ($key == 'current_version') {
                     continue;
                 }
+
                 $value = strip_tags($value);
+
+                if ($key == 'ip_adress_kehadiran' || $key == 'mac_adress_kehadiran') {
+                    $value = trim($value);
+                }
+
+                if ($key == 'id_pengunjung_kehadiran') {
+                    $value = alfanumerik(trim($value));
+                }
+
                 $this->update($key, $value);
                 $this->setting->{$key} = $value;
                 if ($key == 'enable_track') {
@@ -136,7 +158,7 @@ class Setting_model extends CI_Model
         $this->apply_setting();
         // TODO : Jika sudah dipisahkan, buat agar upload gambar dinamis/bisa menyesuaikan dengan kebutuhan tema (u/ Modul Pengaturan Tema)
         if ($data['latar_website'] != '') {
-            $this->upload_img('latar_website', $this->theme_model->lokasi_latar_website());
+            $this->upload_img('latar_website', $this->theme_model->lokasi_latar_website(str_replace('desa/', '', $this->setting->web_theme)));
         } // latar_website
         if ($data['latar_login'] != '') {
             $this->upload_img('latar_login', LATAR_LOGIN);
@@ -144,9 +166,6 @@ class Setting_model extends CI_Model
         if ($data['latar_login_mandiri'] != '') {
             $this->upload_img('latar_login_mandiri', LATAR_LOGIN);
         } // latar_login_mandiri
-
-        // Hapus Cache Pelanggan
-        $this->cache->hapus_cache_untuk_semua('status_langganan');
 
         return $data;
     }
@@ -165,10 +184,13 @@ class Setting_model extends CI_Model
 
         if ($this->upload->do_upload($key)) {
             $this->upload->data();
-        } else {
-            $this->session->error_msg = $this->upload->display_errors();
-            $this->session->success   = -1;
+
+            return $lokasi . $config['file_name'];
         }
+
+        session_error($this->upload->display_errors());
+
+        return false;
     }
 
     private function notifikasi_tracker()
@@ -192,18 +214,29 @@ class Setting_model extends CI_Model
 
     public function update($key = 'enable_track', $value = 1)
     {
-        $this->session->success = 1;
+        if (in_array($key, ['latar_kehadiran'])) {
+            $value = $this->upload_img('latar_kehadiran', LATAR_LOGIN);
+        }
+
+        if ($key == 'tte' && $value == 1) {
+            $this->db->where('key', 'verifikasi_kades')->update('setting_aplikasi', ['value' => 1]); // jika tte aktif, aktifkan juga verifikasi kades
+        }
 
         $outp = $this->db->where('key', $key)->update('setting_aplikasi', ['key' => $key, 'value' => $value]);
 
-        if (! $outp) {
-            $this->session->success = -1;
-        }
+        // Hapus Cache
+        // $this->cache->hapus_cache_untuk_semua('status_langganan');
+        $this->cache->hapus_cache_untuk_semua('setting_aplikasi');
+        $this->cache->hapus_cache_untuk_semua('_cache_modul');
+
+        status_sukses($outp);
     }
 
     public function aktifkan_tracking()
     {
         $outp = $this->db->where('key', 'enable_track')->update('setting_aplikasi', ['value' => 1]);
+        $this->cache->hapus_cache_untuk_semua('setting_aplikasi');
+
         status_sukses($outp);
     }
 
@@ -212,6 +245,8 @@ class Setting_model extends CI_Model
         $_SESSION['success']                 = 1;
         $this->setting->sumber_gambar_slider = $this->input->post('pilihan_sumber');
         $outp                                = $this->db->where('key', 'sumber_gambar_slider')->update('setting_aplikasi', ['value' => $this->input->post('pilihan_sumber')]);
+        $this->cache->hapus_cache_untuk_semua('setting_aplikasi');
+
         if (! $outp) {
             $_SESSION['success'] = -1;
         }
@@ -231,6 +266,8 @@ class Setting_model extends CI_Model
         $penggunaan_server                = $this->input->post('server_mana') ?: $this->input->post('jenis_server');
         $this->setting->penggunaan_server = $penggunaan_server;
         $out2                             = $this->db->where('key', 'penggunaan_server')->update('setting_aplikasi', ['value' => $penggunaan_server]);
+        $this->cache->hapus_cache_untuk_semua('setting_aplikasi');
+
         if (! $out1 || ! $out2) {
             $_SESSION['success'] = -1;
         }
@@ -253,7 +290,31 @@ class Setting_model extends CI_Model
             ->result();
     }
 
-    public function cek_ekstensi()
+    public function cekKebutuhanSistem()
+    {
+        $data = [];
+
+        $sistem = [
+            ['max_execution_time', '>=', '300'],
+            ['post_max_size', '>=', '10M'],
+            ['upload_max_filesize', '>=', '20M'],
+            ['memory_limit', '>=', '256M'],
+        ];
+
+        foreach ($sistem as $value) {
+            [$key, $kondisi, $val] = $value;
+
+            $data[$key] = [
+                'v'      => $val,
+                $key     => ini_get($key),
+                'result' => version_compare(ini_get($key), $val, $kondisi),
+            ];
+        }
+
+        return $data;
+    }
+
+    public function cekEkstensi()
     {
         $e = get_loaded_extensions();
         usort($e, 'strcasecmp');
@@ -273,22 +334,40 @@ class Setting_model extends CI_Model
         return $data;
     }
 
-    public function cek_php()
+    public function disableFunctions()
     {
-        $data['versi']         = PHP_VERSION;
-        $data['versi_minimal'] = VERSI_PHP_MINIMAL;
-        $data['sudah_ok']      = version_compare(PHP_VERSION, VERSI_PHP_MINIMAL) > 0;
+        $wajib    = ['exec'];
+        $disabled = explode(',', ini_get('disable_functions'));
+
+        $functions = [];
+        $lengkap   = true;
+
+        foreach ($wajib as $fuc) {
+            $functions[$fuc] = (in_array($fuc, $disabled)) ? false : true;
+            $lengkap         = $lengkap && $functions[$fuc];
+        }
+
+        $data['lengkap']   = $lengkap;
+        $data['functions'] = $functions;
 
         return $data;
     }
 
-    public function cek_mysql()
+    public function cekPhp()
     {
-        $data['versi'] = $this->db->query('SELECT VERSION() AS version')
-            ->row()->version;
-        $data['versi_minimal'] = VERSI_MYSQL_MINIMAL;
-        $data['sudah_ok']      = version_compare($data['versi'], VERSI_MYSQL_MINIMAL) > 0;
+        return [
+            'versi' => PHP_VERSION,
+            'cek'   => (version_compare(PHP_VERSION, minPhpVersion, '>=') && version_compare(PHP_VERSION, maxPhpVersion, '<')),
+        ];
+    }
 
-        return $data;
+    public function cekDatabase()
+    {
+        $versi = $this->db->query('SELECT VERSION() AS version')->row()->version;
+
+        return [
+            'versi' => $versi,
+            'cek'   => (version_compare($versi, minMySqlVersion, '>=') && version_compare($versi, maxMySqlVersion, '<')) || (version_compare($versi, minMariaDBVersion, '>=')),
+        ];
     }
 }

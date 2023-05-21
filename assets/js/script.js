@@ -1,4 +1,3 @@
-
 // https://stackoverflow.com/questions/13261970/how-to-get-the-absolute-path-of-the-current-javascript-file-name/13262027#13262027
 // Untuk mendapatkan base_url, karena aplikasi bisa terinstall di subfolder
 var scripts = document.getElementsByTagName('script');
@@ -42,9 +41,33 @@ $(document).ready(function()
 	enableHapusTerpilih();
 
 	//Display dialog
-	modalBox();
 	mapBox();
 	cetakBox();
+
+	$('#modalBox').on('shown.bs.modal', function (e) {
+		var link = $(e.relatedTarget);
+	  var title = link.data('title');
+	  var size = link.data('size') ?? '';
+	  var modal = $(this);
+	  // tampilkan halaman loading
+	
+	  modal.find('.modal-title').text(title)
+	  modal.find('.modal-dialog').addClass(size);
+	  $(this).find('.fetched-data').load(link.attr('href'));
+	  // tambahkan csrf token kalau ada form
+	  if (modal.find("form")[0]) {
+	      setTimeout(function() {
+	          addCsrfField(modal.find("form")[0]);
+	      }, 500);
+	  }
+	})
+
+	$('#modalBox').on('hidden.bs.modal	', function (e) {
+		var modal = $(this);
+		$(this).find('.fetched-data').html(``);
+		modal.find('.modal-title').text('')
+	})
+
 
 	//Confirm Delete Modal
 	$('#confirm-delete').on('show.bs.modal', function(e) {
@@ -94,6 +117,14 @@ $(document).ready(function()
 	$('#file1').change(function()
 	{
 		$('#file_path1').val($(this).val());
+		if ($(this).val() == '')
+		{
+			$('#'+$(this).data('submit')).attr('disabled','disabled');
+		}
+		else
+		{
+			$('#'+$(this).data('submit')).removeAttr('disabled');
+		}
 	});
 	$('#file_path1').click(function()
 	{
@@ -140,6 +171,20 @@ $(document).ready(function()
 	$('#file_path4').click(function()
 	{
 		$('#file_browser4').click();
+	});
+
+	$('#file_browser5').click(function(e)
+	{
+		e.preventDefault();
+		$('#file5').click();
+	});
+	$('#file5').change(function()
+	{
+		$('#file_path5').val($(this).val());
+	});
+	$('#file_path5').click(function()
+	{
+		$('#file_browser5').click();
 	});
 
 	$('[data-rel="popover"]').popover(
@@ -307,7 +352,14 @@ function checkAll(id = "#checkall") {
 }
 
 function enableHapusTerpilih() {
+	// cek jika ada tombol hapus ter disable.
+	var disable = $("input[name='id_cb[]']:checked:not(:disabled)").filter(function(index) {
+		return $(this).data('deletable') == 0;
+	});
+	 
+
 	if ($("input[name='id_cb[]']:checked:not(:disabled)").length <= 0) {
+		// cek disable hapus
 		$(".aksi-terpilih").addClass('disabled');
 		$(".hapus-terpilih").addClass('disabled');
 		$(".hapus-terpilih").attr('href','#');
@@ -315,6 +367,10 @@ function enableHapusTerpilih() {
 		$(".aksi-terpilih").removeClass('disabled');
 		$(".hapus-terpilih").removeClass('disabled');
 		$(".hapus-terpilih").attr('href','#confirm-delete');
+		if (disable.length != 0) {
+			$(".hapus-terpilih").addClass('disabled');
+		  $(".hapus-terpilih").attr('href','#');
+		}
 	}
 }
 
@@ -335,25 +391,6 @@ function aksiBorongan(idForm, action) {
 	{
 		$('#' + idForm).attr('action', action);
     $('#' + idForm).submit();
-	});
-	return false;
-}
-
-function modalBox()
-{
-	$('#modalBox').on('show.bs.modal', function(e)
-	{
-		var link = $(e.relatedTarget);
-		var title = link.data('title');
-		var modal = $(this)
-		modal.find('.modal-title').text(title)
-		$(this).find('.fetched-data').load(link.attr('href'));
-		// tambahkan csrf token kalau ada form
-		if (modal.find("form")[0]) {
-			setTimeout(function() {
-				addCsrfField(modal.find("form")[0]);
-			}, 500);
-		}
 	});
 	return false;
 }
@@ -417,6 +454,13 @@ function notification(type, message)
 		+'</div>'
 		+''
 	);
+}
+
+function cek_koneksi() {
+	$('#maincontent').prepend('<div class = "callout callout-warning">' +
+		'<h4><i class="fa fa-warning"></i>&nbsp;&nbsp;Informasi</h4 >' +
+		'<p> Aplikasi tidak dapat terhubung dengan koneksi internet, beberapa modul mungkin tidak berjalan dengan baik. </a></p>'+
+		'</div>');
 }
 
 function cari_nik()
@@ -564,3 +608,115 @@ function refresh_badge(elem, url)
 function huruf_awal_besar(str) {
 	return str.replace(/\S+/g, str => str.charAt(0).toUpperCase() + str.substr(1).toLowerCase());
 }
+
+// cek suport es6/es2015
+var supportsES6 = function() {
+  try {
+    new Function("(a = 0) => a");
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}();
+
+function ditolak(id, ajax_url, redirect, title = 'Alasan Ditolak', text, placeHolders){
+
+  Swal.fire({
+    title: title,
+    input: 'textarea',
+    inputPlaceholder : placeHolders,
+    text: text,
+	  inputValidator: (value) => {
+	    if (!value) {
+		    return 'Kolom keterangan tidak boleh kosong'
+		  }
+	  },
+	  customClass:{
+	  	popup: 'swal-lg',
+	  	htmlContainer: 'swal-left swal-bold',
+	  },
+    showCancelButton: true,
+    confirmButtonText: 'Kirim',
+    cancelButtonText: 'Tutup',
+    showLoaderOnConfirm: true,
+    preConfirm: (alasan) => {
+      const formData = new FormData();
+      formData.append('sidcsrf', getCsrfToken());
+      formData.append('id', id);
+      formData.append('alasan', alasan);
+
+      return fetch(ajax_url, {
+              method: 'POST',
+              body: formData,
+      }).then(response => {
+          if (!response.ok) {
+              throw new Error(response.statusText)
+          }
+          return response.json()
+      })
+      .catch(error => {
+      	console.log(error)
+          Swal.showValidationMessage(
+            `Request failed: ${error}`
+          )
+      })
+    }
+  }).then((result) => {
+      if (result.isConfirmed) {
+          if (result.value.status == true) {
+              swal2_success(redirect, 'Berhasil dikembalikan');
+          } else {
+          		Swal.fire({ icon: 'error', title: result.value.message })
+          }
+      }
+  })
+}
+
+function swal2_success(to, message ="Berhasil disimpan") {
+	Swal.fire({
+	  icon: 'success',
+	  title: message,
+	  showConfirmButton: false,
+	  timer: 1500
+	}).then((result) => {
+	  window.location.replace(to);
+	})
+}
+
+function swal2_question(url_ajax, redirect, message, data, tolak = false) {
+	Swal.fire({
+    title: message,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d73925',
+    confirmButtonText: 'Ya',
+    showDenyButton: tolak,
+    denyButtonColor: '#ffc107',
+    denyButtonText: `Tolak`,
+    cancelButtonText: `Tutup`,
+
+  }).then((result) => {
+    if (result.isConfirmed) {
+      Swal.fire({title: 'Sedang Memproses', allowOutsideClick: false, allowEscapeKey:false, showConfirmButton:false, didOpen: () => {Swal.showLoading()}});
+      $.ajax({
+          url: url_ajax.confirm,
+          type: 'Post',
+          data: data,
+      })
+      .done(function() {
+          window.location.replace(redirect.confirm);
+      })
+      .fail(function(e) {
+      	Swal.fire({
+				  icon: 'error',
+				  text: e.statusText,
+				})
+      })
+    }else if(result.isDenied){
+    	ditolak(data.id, url_ajax.denied, redirect.denied);
+    }
+  })
+}
+

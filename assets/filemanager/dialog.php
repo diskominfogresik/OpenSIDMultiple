@@ -363,7 +363,7 @@ $get_params = http_build_query($get_params);
 		<!-- The Templates plugin is included to render the upload/download listings -->
 		<script src="js/tmpl.min.js"></script>
 		<!-- The Load Image plugin is included for the preview images and image resizing functionality -->
-		<script src="js/load-image.all.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-load-image/2.18.0/load-image.all.min.js"></script>
 		<!-- The Canvas to Blob plugin is included for image resizing functionality -->
 		<script src="js/canvas-to-blob.min.js"></script>
     <!-- The Iframe Transport is required for browsers without support for XHR file uploads -->
@@ -1078,10 +1078,9 @@ $files = $sorted;
                         $mini_src = $src_thumb = $config['ftp_base_url'].$config['ftp_thumbs_dir'].$subdir. $file;
                         $creation_thumb_path = "/".$config['ftp_base_folder'].$config['ftp_thumbs_dir'].$subdir. $file;
                     }else{
-                        
-                        // $creation_thumb_path = $mini_src = $src_thumb = $thumbs_path. $file;
-                        $creation_thumb_path = $mini_src = $src_thumb = $cur_dir_thumb. $file;                       
-                    
+
+                        $creation_thumb_path = $mini_src = $src_thumb = $thumbs_path. $file;
+
                         if (!file_exists($src_thumb)) {
                             if (!create_img($file_path, $creation_thumb_path, 122, 91, 'crop', $config)) {
                                 $src_thumb = $mini_src = "";

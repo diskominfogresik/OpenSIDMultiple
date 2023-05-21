@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -39,6 +39,8 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 class Grup_model extends MY_Model
 {
+    public const KECUALI = [1, 2, 3, 4];
+
     protected $table = 'user_grup';
 
     public function __construct()
@@ -92,9 +94,11 @@ class Grup_model extends MY_Model
         $this->list_data_sql();
         //Ordering
         switch ($o) {
-            case 1: $order = 'g.nama ASC'; break;
+            case 1: $order = 'g.nama ASC';
+                break;
 
-            case 2: $order = 'g.nama DESC'; break;
+            case 2: $order = 'g.nama DESC';
+                break;
 
             default:$order = 'g.nama ASC';
         }
@@ -177,6 +181,7 @@ class Grup_model extends MY_Model
         ];
         $outp = $this->db
             ->where('id', $id)
+            ->where_not_in('id', static::KECUALI)
             ->update($this->table, $data);
         $outp = $outp && $this->simpan_akses($id);
 
@@ -199,10 +204,14 @@ class Grup_model extends MY_Model
     public function delete($id, $semua = false)
     {
         if (! $semua) {
-            $this->session->success   = 1;
-            $this->session->error_msg = '';
+            session_error_clear();
         }
-        $outp = $this->db->where('id', $id)->delete($this->table);
+
+        $outp = $this->db
+            ->where('id', $id)
+            ->where_not_in('id', static::KECUALI)
+            ->delete($this->table);
+
         $this->cache->hapus_cache_untuk_semua('_cache_modul');
 
         status_sukses($outp);
@@ -210,13 +219,12 @@ class Grup_model extends MY_Model
 
     public function delete_all()
     {
-        $this->session->success   = 1;
-        $this->session->error_msg = '';
+        session_error_clear();
 
         $id_cb = $this->input->post('id_cb');
 
         foreach ($id_cb as $id) {
-            $this->delete($id, $semua = true);
+            $this->delete($id, true);
         }
     }
 

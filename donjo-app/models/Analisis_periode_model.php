@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -103,17 +103,23 @@ class Analisis_periode_model extends MY_Model
     public function list_data($o = 0, $offset = 0, $limit = 500)
     {
         switch ($o) {
-            case 1: $order_sql = ' ORDER BY u.id'; break;
+            case 1: $order_sql = ' ORDER BY u.id';
+                break;
 
-            case 2: $order_sql = ' ORDER BY u.id DESC'; break;
+            case 2: $order_sql = ' ORDER BY u.id DESC';
+                break;
 
-            case 3: $order_sql = ' ORDER BY u.id'; break;
+            case 3: $order_sql = ' ORDER BY u.id';
+                break;
 
-            case 4: $order_sql = ' ORDER BY u.id DESC'; break;
+            case 4: $order_sql = ' ORDER BY u.id DESC';
+                break;
 
-            case 5: $order_sql = ' ORDER BY g.id'; break;
+            case 5: $order_sql = ' ORDER BY g.id';
+                break;
 
-            case 6: $order_sql = ' ORDER BY g.id DESC'; break;
+            case 6: $order_sql = ' ORDER BY g.id DESC';
+                break;
 
             default:$order_sql = ' ORDER BY u.id';
         }
@@ -160,15 +166,14 @@ class Analisis_periode_model extends MY_Model
 
     public function insert()
     {
-        $data = $this->validasi_data($this->input->post());
-        $dp   = $data['duplikasi'];
+        $data              = $this->validasi_data($this->input->post());
+        $data['duplikasi'] = $this->input->post('duplikasi');
+        $dp                = $data['duplikasi'];
         unset($data['duplikasi']);
 
         if ($dp == 1) {
-            $sqld   = 'SELECT id FROM analisis_periode WHERE id_master = ? ORDER BY id DESC LIMIT 1';
-            $queryd = $this->db->query($sqld, $this->session->analisis_master);
-            $dpd    = $queryd->row_array();
-            $sblm   = $dpd['id'];
+            $dpd  = $this->db->select('id')->where('id_master', $this->session->analisis_master)->order_by('id', 'desc')->get('analisis_periode')->row_array();
+            $sblm = $dpd['id'];
         }
 
         $akt               = [];
@@ -181,21 +186,19 @@ class Analisis_periode_model extends MY_Model
         $outp = $this->db->insert('analisis_periode', $data);
 
         if ($dp == 1) {
-            $sqld   = 'SELECT id FROM analisis_periode WHERE id_master = ? ORDER BY id DESC LIMIT 1';
-            $queryd = $this->db->query($sqld, $this->session->analisis_master);
-            $dpd    = $queryd->row_array();
-            $skrg   = $dpd['id'];
+            $dpd  = $this->db->select('id')->where('id_master', $this->session->analisis_master)->order_by('id', 'desc')->get('analisis_periode')->row_array();
+            $skrg = $dpd['id'];
 
-            $sql   = 'SELECT id_subjek,id_indikator,id_parameter FROM analisis_respon WHERE id_periode = ? ';
-            $query = $this->db->query($sql, $sblm);
-            $data  = $query->result_array();
+            $data = $this->db->select(['id_subjek', 'id_indikator', 'id_parameter'])->where('id_periode', $sblm)->get('analisis_respon')->result_array();
 
-            for ($i = 0; $i < count($data); $i++) {
-                $data[$i]['id_periode'] = $skrg;
+            if ($data) {
+                for ($i = 0; $i < count($data); $i++) {
+                    $data[$i]['id_periode'] = $skrg;
+                }
+                $outp = $this->db->insert_batch('analisis_respon', $data);
+                $this->load->model('analisis_respon_model');
+                $this->analisis_respon_model->pre_update($skrg);
             }
-            $outp = $this->db->insert_batch('analisis_respon', $data);
-            $this->load->model('analisis_respon_model');
-            $this->analisis_respon_model->pre_update($skrg);
         }
 
         status_sukses($outp); //Tampilkan Pesan

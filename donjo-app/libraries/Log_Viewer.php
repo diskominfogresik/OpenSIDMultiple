@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,48 +29,13 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
-/*
- * File ini bagian dari:
- *
- * OpenSID
- *
- * Sistem informasi desa sumber terbuka untuk memajukan desa
- *
- * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
- *
- * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2020 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
- *
- * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
- * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
- * tanpa batasan, termasuk hak untuk menggunakan, menyalin, mengubah dan/atau mendistribusikan,
- * asal tunduk pada syarat berikut:
- *
- * Pemberitahuan hak cipta di atas dan pemberitahuan izin ini harus disertakan dalam
- * setiap salinan atau bagian penting Aplikasi Ini. Barang siapa yang menghapus atau menghilangkan
- * pemberitahuan ini melanggar ketentuan lisensi Aplikasi Ini.
- *
- * PERANGKAT LUNAK INI DISEDIAKAN "SEBAGAIMANA ADANYA", TANPA JAMINAN APA PUN, BAIK TERSURAT MAUPUN
- * TERSIRAT. PENULIS ATAU PEMEGANG HAK CIPTA SAMA SEKALI TIDAK BERTANGGUNG JAWAB ATAS KLAIM, KERUSAKAN ATAU
- * KEWAJIBAN APAPUN ATAS PENGGUNAAN ATAU LAINNYA TERKAIT APLIKASI INI.
- *
- * @copyright (c) 2018 Seun Matt
- * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2020 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
- * @license   https://github.com/SeunMatt/codeigniter-log-viewer/blob/master/LICENSE MIT Licence
- * @license   http://www.gnu.org/licenses/gpl.html GPL V3
- *
- * @see      https://github.com/SeunMatt/codeigniter-log-viewer
- * @see      https://github.com/OpenSID/OpenSID
- */
 defined('BASEPATH') || exit('No direct script access allowed');
-defined('APPPATH')  || exit('Not a Code Igniter Environment');
 
 class Log_Viewer
 {
@@ -155,6 +120,7 @@ class Log_Viewer
      * and return it's content that can then be echoed
      *
      * @param $fileName optional base64_encoded filename of the log file to process.
+     *
      * @returns the parse view file content as a string that can be echoed
      */
     public function showLogs()
@@ -339,16 +305,16 @@ class Log_Viewer
             }
 
             //this means the file has content that are not logged
-                //using log_message()
-                //they may be sensitive! so we are just skipping this
-                //other we could have just insert them like this
-                // array_push($superLog, [
-                // 	"level" => "INFO",
-                // 	"date" => "",
-                // 	"icon" => self::$levelsIcon["INFO"],
-                // 	"class" => self::$levelClasses["INFO"],
-                // 	"content" => $log
-                // ]);
+            //using log_message()
+            //they may be sensitive! so we are just skipping this
+            //other we could have just insert them like this
+            // array_push($superLog, [
+            // 	"level" => "INFO",
+            // 	"date" => "",
+            // 	"icon" => self::$levelsIcon["INFO"],
+            // 	"class" => self::$levelClasses["INFO"],
+            // 	"content" => $log
+            // ]);
         }
 
         return $superLog;
@@ -358,8 +324,8 @@ class Log_Viewer
      * This function will extract the logs in the supplied
      * fileName
      *
-     * @param      $fileNameInBase64
-     * @param bool $singleLine
+     * @param bool  $singleLine
+     * @param mixed $fileNameInBase64
      *
      * @return array|null
      *
@@ -425,6 +391,7 @@ class Log_Viewer
      * in the underlying log file
      *
      * @returns array | each line of file contents is an entry in the returned array.
+     *
      * @params complete fileName
      *
      * @param mixed $fileName
@@ -449,8 +416,8 @@ class Log_Viewer
      * otherwise, it will return all file content as a single string with each line ending
      * in line break character "\n"
      *
-     * @param      $fileName
-     * @param bool $singleLine
+     * @param bool  $singleLine
+     * @param mixed $fileName
      *
      * @return bool|string
      */
@@ -471,6 +438,7 @@ class Log_Viewer
      *
      * @param boolean. If true returns the basename of the files otherwise full path
      * @param mixed $basename
+     *
      * @returns array of file
      */
     private function getFiles($basename = true)
@@ -511,7 +479,7 @@ class Log_Viewer
         //if we're to return the base name of the files
         //let's do that here
         foreach ($files as $file) {
-            array_push($finalFiles, ['file_b64' => base64_encode(basename($file)), 'file_name' => basename($file)]);
+            $finalFiles[] = ['file_b64' => base64_encode(basename($file)), 'file_name' => basename($file)];
         }
 
         return $finalFiles;
@@ -559,15 +527,14 @@ class Log_Viewer
      * name as sent from the browser/client
      * and append the LOG_FOLDER_PREFIX and decode it from base64
      *
-     * @param $fileNameInBase64
+     * @internal param $fileName
+     *
+     * @param mixed $fileNameInBase64
      *
      * @return string|null
-     *
-     * @internal param $fileName
      */
     private function prepareRawFileName($fileNameInBase64)
     {
-
         //let's determine what the current log file is
         if (null !== $fileNameInBase64 && ! empty($fileNameInBase64)) {
             $currentFile = $this->logFolderPath . '/' . basename(base64_decode($fileNameInBase64, true));

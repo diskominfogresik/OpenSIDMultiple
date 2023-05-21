@@ -24,7 +24,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 	</section>
 	<section class="content">
 		<div class="box box-info">
-			<form id="validasi1" action="<?= $form_action?>" method="POST" enctype="multipart/form-data" class="form-horizontal">
+			<form id="validasi" action="<?= $form_action ?>" method="POST" class="form-horizontal">
 				<div class="box-body">
 					<div id="tampil-map">
 						<input type="hidden" name="id" id="id"  value="<?= $lokasi['id']?>"/>
@@ -34,13 +34,13 @@ defined('BASEPATH') || exit('No direct script access allowed');
 					<div class="form-group">
 						<label class="col-sm-3 control-label" for="lat">Lat</label>
 						<div class="col-sm-9">
-							<input type="text" class="form-control input-sm number" name="lat" id="lat" value="<?= $lokasi['lat']?>"/>
+							<input type="text" class="form-control input-sm lat" name="lat" id="lat" value="<?= $lokasi['lat']?>"/>
 						</div>
 					</div>
 					<div class="form-group">
-						<label class="col-sm-3 control-label" for="lat">Lng</label>
+						<label class="col-sm-3 control-label" for="lng">Lng</label>
 						<div class="col-sm-9">
-							<input type="text" class="form-control input-sm number" name="lng" id="lng" value="<?= $lokasi['lng']?>" />
+							<input type="text" class="form-control input-sm lng" name="lng" id="lng" value="<?= $lokasi['lng']?>" />
 						</div>
 					</div>
 					<a href="<?= site_url('plan')?>" class="btn btn-social btn-flat bg-purple btn-sm visible-xs-block visible-sm-inline-block visible-md-inline-block visible-lg-inline-block" title="Kembali"><i class="fa fa-arrow-circle-o-left"></i> Kembali</a>
@@ -65,8 +65,13 @@ defined('BASEPATH') || exit('No direct script access allowed');
 			var zoom = <?=$desa['zoom'] ?: 16?>;
 		<?php endif; ?>
 
+        var options = {
+            maxZoom: <?= setting('max_zoom_peta') ?>,
+            minZoom: <?= setting('min_zoom_peta') ?>,
+        };
+
 		//Inisialisasi tampilan peta
-		var peta_lokasi = L.map('tampil-map').setView(posisi, zoom);
+		var peta_lokasi = L.map('tampil-map', options).setView(posisi, zoom);
 
 		//1. Menampilkan overlayLayers Peta Semua Wilayah
 		var marker_desa = [];
@@ -103,7 +108,7 @@ defined('BASEPATH') || exit('No direct script access allowed');
 		<?php endif; ?>
 
 		//Menampilkan BaseLayers Peta
-		var baseLayers = getBaseLayers(peta_lokasi, '<?=$this->setting->mapbox_key?>');
+		var baseLayers = getBaseLayers(peta_lokasi, MAPBOX_KEY, JENIS_PETA);
 
 		//Menampilkan dan Menambahkan Peta wilayah + Geolocation GPS
 		L.Control.FileLayerLoad.LABEL = '<img class="icon-map" src="<?= base_url()?>assets/images/folder.svg" alt="file icon"/>';
@@ -120,50 +125,12 @@ defined('BASEPATH') || exit('No direct script access allowed');
 		L.control.scale().addTo(peta_lokasi);
 
 		// Menampilkan OverLayer Area, Garis, Lokasi plus Lokasi Pembangunan
-		var layerCustom = tampilkan_layer_area_garis_lokasi_plus(peta_lokasi, '<?= addslashes(json_encode($all_area)) ?>', '<?= addslashes(json_encode($all_garis)) ?>', '<?= addslashes(json_encode($all_lokasi)) ?>', '<?= addslashes(json_encode($all_lokasi_pembangunan)) ?>', '<?= base_url() . LOKASI_SIMBOL_LOKASI ?>', "<?= favico_desa()?>", '<?= base_url() . LOKASI_FOTO_AREA ?>', '<?= base_url() . LOKASI_FOTO_GARIS ?>', '<?= base_url() . LOKASI_FOTO_LOKASI ?>', '<?= base_url() . LOKASI_GALERI ?>', '<?= site_url('pembangunan/')?>');
+		var layerCustom = tampilkan_layer_area_garis_lokasi_plus(peta_lokasi, '<?= addslashes(json_encode($all_area)) ?>', '<?= addslashes(json_encode($all_garis)) ?>', '<?= addslashes(json_encode($all_lokasi)) ?>', '<?= addslashes(json_encode($all_lokasi_pembangunan)) ?>', '<?= base_url() . LOKASI_SIMBOL_LOKASI ?>', "<?= favico_desa()?>", '<?= base_url() . LOKASI_FOTO_AREA ?>', '<?= base_url() . LOKASI_FOTO_GARIS ?>', '<?= base_url() . LOKASI_FOTO_LOKASI ?>', '<?= base_url() . LOKASI_GALERI ?>', '<?= site_url('pembangunan/')?>', TAMPIL_LUAS);
 
 		L.control.layers(baseLayers, overlayLayers, {position: 'topleft', collapsed: true}).addTo(peta_lokasi);
 		L.control.groupedLayers('', layerCustom, {groupCheckboxes: true, position: 'topleft', collapsed: true}).addTo(peta_lokasi);
 
 	}; //EOF window.onload
-
-	$(document).ready(function(){
-		$('#simpan_kantor').click(function(){
-
-			$("#validasi1").validate({
-				errorElement: "label",
-				errorClass: "error",
-				highlight:function (element){
-					$(element).closest(".form-group").addClass("has-error");
-				},
-				unhighlight:function (element){
-					$(element).closest(".form-group").removeClass("has-error");
-				},
-				errorPlacement: function (error, element) {
-					if (element.parent('.input-group').length) {
-						error.insertAfter(element.parent());
-					} else {
-						error.insertAfter(element);
-					}
-				}
-			});
-
-			if (!$('#validasi1').valid()) return;
-
-			window.location.reload(false);
-
-			var id = $('#id').val();
-			var lat = $('#lat').val();
-			var lng = $('#lng').val();
-
-			$.ajax({
-				type: "POST",
-				url: "<?=$form_action?>",
-				dataType: 'json',
-				data: {lat: lat, lng: lng, id: id},
-			});
-		});
-	});
 </script>
 <script src="<?= base_url()?>assets/js/leaflet.filelayer.js"></script>
 <script src="<?= base_url()?>assets/js/togeojson.js"></script>

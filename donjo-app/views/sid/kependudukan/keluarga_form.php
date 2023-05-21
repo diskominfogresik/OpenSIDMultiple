@@ -1,5 +1,4 @@
 <?php if ($this->CI->cek_hak_akses('u')): ?>
-<?php $this->load->view('global/validasi_form'); ?>
 	<div class="content-wrapper">
 		<section class="content-header">
 			<h1>Data Keluarga</h1>
@@ -32,7 +31,7 @@
                                                     else:
                                                         $no_kk = $kk['no_kk'];
                                                     endif;
-                                                ?>
+?>
 												<div class="input-group input-group-sm">
 													<span class="input-group-addon">
 														<input type="checkbox" title="Centang jika belum memiliki No. KK" id="nokk_sementara" <?= jecho($cek_nokk, '0', 'checked ="checked"') ?>>

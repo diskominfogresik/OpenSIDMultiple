@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -91,15 +91,15 @@ class Garis extends Admin_Controller
         if (isset($_POST['per_page'])) {
             $_SESSION['per_page'] = $_POST['per_page'];
         }
-        $data['per_page'] = $_SESSION['per_page'];
 
+        $data['per_page']     = $_SESSION['per_page'];
         $data['paging']       = $this->plan_garis_model->paging($p, $o);
         $data['main']         = $this->plan_garis_model->list_data($o, $data['paging']->offset, $data['paging']->per_page);
         $data['keyword']      = $this->plan_garis_model->autocomplete();
         $data['list_line']    = $this->plan_garis_model->list_line();
         $data['list_subline'] = $this->plan_garis_model->list_subline();
+        $data['tip']          = 1;
 
-        $data['tip'] = 1;
         $this->render('garis/table', $data);
     }
 
@@ -133,8 +133,8 @@ class Garis extends Admin_Controller
             $data['garis'] = null;
         }
 
-        $data['desa']                   = $this->config_model->get_data();
-        $data['wil_atas']               = $this->config_model->get_data();
+        $data['desa']                   = $this->header['desa'];
+        $data['wil_atas']               = $this->header['desa'];
         $data['dusun_gis']              = $this->wilayah_model->list_dusun();
         $data['rw_gis']                 = $this->wilayah_model->list_rw();
         $data['rt_gis']                 = $this->wilayah_model->list_rt();
@@ -153,6 +153,13 @@ class Garis extends Admin_Controller
         $this->plan_garis_model->update_position($id);
 
         redirect("{$this->controller}/index/{$p}/{$o}");
+    }
+
+    public function kosongkan($id = '')
+    {
+        $this->redirect_hak_akses('u');
+        $this->plan_garis_model->kosongkan_path($id);
+        redirect($_SERVER['HTTP_REFERER']);
     }
 
     public function search()

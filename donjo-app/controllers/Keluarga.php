@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,11 +29,13 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
+
+use App\Models\Config;
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
@@ -65,7 +67,7 @@ class Keluarga extends Admin_Controller
         redirect($this->controller);
     }
 
-    public function index($p = 1, $o = 0)
+    public function index($p = 1, $o = 1)
     {
         $data['p'] = $p;
         $data['o'] = $o;
@@ -116,8 +118,7 @@ class Keluarga extends Admin_Controller
 
     public function autocomplete()
     {
-        $data = $this->keluarga_model->autocomplete($this->input->post('cari'));
-        $this->json_output($data);
+        return json($this->keluarga_model->autocomplete($this->input->post('cari')));
     }
 
     public function cetak($o = 0, $aksi = '', $privasi_kk = 0)
@@ -193,13 +194,13 @@ class Keluarga extends Admin_Controller
         $data['cacat']              = $this->penduduk_model->list_cacat();
         $data['sakit_menahun']      = $this->referensi_model->list_data('tweb_sakit_menahun');
         $data['cara_kb']            = $this->penduduk_model->list_cara_kb($data['penduduk']['id_sex']);
-        $data['wajib_ktp']          = $this->referensi_model->list_wajib_ktp();
         $data['ktp_el']             = $this->referensi_model->list_ktp_el();
         $data['status_rekam']       = $this->referensi_model->list_status_rekam();
         $data['tempat_dilahirkan']  = $this->referensi_model->list_ref_flip(TEMPAT_DILAHIRKAN);
         $data['jenis_kelahiran']    = $this->referensi_model->list_ref_flip(JENIS_KELAHIRAN);
         $data['penolong_kelahiran'] = $this->referensi_model->list_ref_flip(PENOLONG_KELAHIRAN);
         $data['pilihan_asuransi']   = $this->referensi_model->list_data('tweb_penduduk_asuransi');
+        $data['kehamilan']          = $this->referensi_model->list_data('ref_penduduk_hamil');
         $data['suku']               = $this->penduduk_model->get_suku();
         $data['nik_sementara']      = $this->penduduk_model->nik_sementara();
         $data['cek_nik']            = get_nik($data['penduduk']['nik']);
@@ -247,13 +248,13 @@ class Keluarga extends Admin_Controller
         $data['cacat']              = $this->penduduk_model->list_cacat();
         $data['sakit_menahun']      = $this->referensi_model->list_data('tweb_sakit_menahun');
         $data['cara_kb']            = $this->penduduk_model->list_cara_kb($data['penduduk']['id_sex']);
-        $data['wajib_ktp']          = $this->referensi_model->list_wajib_ktp();
         $data['ktp_el']             = $this->referensi_model->list_ktp_el();
         $data['status_rekam']       = $this->referensi_model->list_status_rekam();
         $data['tempat_dilahirkan']  = $this->referensi_model->list_ref_flip(TEMPAT_DILAHIRKAN);
         $data['jenis_kelahiran']    = $this->referensi_model->list_ref_flip(JENIS_KELAHIRAN);
         $data['penolong_kelahiran'] = $this->referensi_model->list_ref_flip(PENOLONG_KELAHIRAN);
         $data['pilihan_asuransi']   = $this->referensi_model->list_data('tweb_penduduk_asuransi');
+        $data['kehamilan']          = $this->referensi_model->list_data('ref_penduduk_hamil');
         $data['suku']               = $this->penduduk_model->get_suku();
         $data['nik_sementara']      = $this->penduduk_model->nik_sementara();
 
@@ -478,7 +479,7 @@ class Keluarga extends Admin_Controller
         $data['hubungan'] = $this->keluarga_model->list_hubungan();
         $data['main']     = $this->keluarga_model->list_anggota($id);
         $kk               = $this->keluarga_model->get_kepala_kk($id);
-        $data['desa']     = $this->config_model->get_data();
+        $data['desa']     = Config::first();
 
         if ($kk) {
             $data['kepala_kk'] = $kk;
@@ -685,7 +686,6 @@ class Keluarga extends Admin_Controller
         $this->redirect_hak_akses('u');
         $data['kk']             = $this->keluarga_model->get_keluarga($id);
         $data['anggota']        = $this->keluarga_model->list_anggota($id, ['dengan_kk' => false]);
-        $data['cek_nokk']       = get_nokk($data['kk']['no_kk']);
         $data['nokk_sementara'] = $this->keluarga_model->nokk_sementara();
         $data['form_action']    = site_url("{$this->controller}/pecah_semua/{$id}");
 

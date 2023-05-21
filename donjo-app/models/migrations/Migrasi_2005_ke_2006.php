@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -55,11 +55,13 @@ class Migrasi_2005_ke_2006 extends CI_model
         // Arahkan semua widget statis ubahan desa ke folder desa/widgets
         $list_widgets = $this->db->where('jenis_widget', 2)->get('widget')->result_array();
 
-        foreach ($list_widgets as $widgets) {
-            $ganti = str_replace('desa/widget', 'desa/widgets', $widgets['isi']); // Untuk versi 20.04-pasca ke atas
-            $cek   = explode('/', $ganti); // Untuk versi 20.04 ke bawah
-            if ($cek[0] !== 'desa' && $cek[1] === null) { // agar migrasi bisa dijalankan berulang kali
-                $this->db->where('id', $widgets['id'])->update('widget', ['isi' => 'desa/widgets/' . $widgets['isi']]);
+        if ($list_widgets) {
+            foreach ($list_widgets as $widgets) {
+                $ganti = str_replace('desa/widget', 'desa/widgets', $widgets['isi']); // Untuk versi 20.04-pasca ke atas
+                $cek   = explode('/', $ganti); // Untuk versi 20.04 ke bawah
+                if ($cek[0] !== 'desa' && $cek[1] === null) { // agar migrasi bisa dijalankan berulang kali
+                    $this->db->where('id', $widgets['id'])->update('widget', ['isi' => 'desa/widgets/' . $widgets['isi']]);
+                }
             }
         }
         // Sesuaikan dengan sql_mode STRICT_TRANS_TABLES
@@ -94,15 +96,18 @@ class Migrasi_2005_ke_2006 extends CI_model
     {
         // Menambahkan menu 'Group / Hak Akses' covid19 table 'user_grup'
         $data[] = [
-            'id'   => '5',
-            'nama' => 'Satgas Covid-19',
+            'id'         => '5',
+            'nama'       => 'Satgas Covid-19',
+            'updated_by' => $this->session->user,
         ];
 
+        // karena di versi ini belum ada updated_by, tp dilakukan migrasi mundur jadi updated_by perlu diisi
         foreach ($data as $grup) {
             $sql = $this->db->insert_string('user_grup', $grup);
             $sql .= ' ON DUPLICATE KEY UPDATE
 			id = VALUES(id),
-			nama = VALUES(nama)';
+			nama = VALUES(nama),
+            updated_by = VALUES(updated_by)';
             $this->db->query($sql);
         }
     }

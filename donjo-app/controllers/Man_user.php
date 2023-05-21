@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,13 +29,15 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
  */
 
 defined('BASEPATH') || exit('No direct script access allowed');
+
+use App\Models\Pamong;
 
 class Man_user extends Admin_Controller
 {
@@ -101,6 +103,8 @@ class Man_user extends Admin_Controller
 
         $data['user_group'] = $this->referensi_model->list_data('user_grup');
 
+        $data['pamong'] = Pamong::selectData()->daftar()->get();
+
         $this->render('man_user/manajemen_user_form', $data);
     }
 
@@ -130,20 +134,22 @@ class Man_user extends Admin_Controller
     {
         $this->redirect_hak_akses('u');
         $this->set_form_validation();
+        $this->form_validation->set_rules('username', 'Username', 'is_unique[user.username]');
+        $this->form_validation->set_rules('email', 'Email', 'is_unique[user.email]');
+        $this->form_validation->set_rules('pamong_id', 'Pamong', 'is_unique[user.pamong_id]');
 
         if ($this->form_validation->run() !== true) {
-            $this->session->success   = -1;
-            $this->session->error_msg = trim(validation_errors());
-            redirect("man_user/form/{$p}/{$o}");
+            session_error(trim(validation_errors()));
+            redirect('man_user/form');
         } else {
             $this->user_model->insert();
+
             redirect('man_user');
         }
     }
 
     private function set_form_validation()
     {
-        $this->load->helper('form');
         $this->load->library('form_validation');
         $this->form_validation->set_error_delimiters('', '');
         $this->form_validation->set_rules('password', 'Kata Sandi Baru', 'required|callback_syarat_sandi');
@@ -161,10 +167,12 @@ class Man_user extends Admin_Controller
     {
         $this->redirect_hak_akses('u');
         $this->set_form_validation();
+        $this->form_validation->set_rules('username', 'Username', "is_unique[user.username,id,{$id}]");
+        $this->form_validation->set_rules('email', 'Email', "is_unique[user.email,id,{$id}]");
+        $this->form_validation->set_rules('pamong_id', 'Pamong', "is_unique[user.pamong_id,id,{$id}]");
 
         if ($this->form_validation->run() !== true) {
-            $this->session->success   = -1;
-            $this->session->error_msg = trim(validation_errors());
+            session_error(trim(validation_errors()));
             redirect("man_user/form/{$p}/{$o}/{$id}");
         } else {
             $this->user_model->update($id);
@@ -190,13 +198,13 @@ class Man_user extends Admin_Controller
     {
         $this->redirect_hak_akses('u');
         $this->user_model->user_lock($id, 0);
-        redirect("man_user/index/{$p}/{$o}");
+        redirect('man_user');
     }
 
     public function user_unlock($id = '')
     {
         $this->redirect_hak_akses('u');
         $this->user_model->user_lock($id, 1);
-        redirect("man_user/index/{$p}/{$o}");
+        redirect('man_user');
     }
 }

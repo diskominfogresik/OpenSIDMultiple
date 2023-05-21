@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -55,9 +55,8 @@ class Migrasi_fitur_premium_2111 extends MY_Model
         $hasil = $hasil && $this->migrasi_2021102071($hasil);
         $hasil = $hasil && $this->migrasi_2021102271($hasil);
         $hasil = $hasil && $this->migrasi_2021102371($hasil);
-        $hasil = $hasil && $this->migrasi_2021102451($hasil);
 
-        return $hasil && $this->migrasi_2021103171($hasil);
+        return $hasil && $this->migrasi_2021102451($hasil);
     }
 
     protected function migrasi_2021100171($hasil)
@@ -108,42 +107,30 @@ class Migrasi_fitur_premium_2111 extends MY_Model
 
     protected function migrasi_2021101871($hasil)
     {
-        // Sesuaikan tabel covid19_pemudik
-
-        $this->db->truncate('ref_status_covid');
-
-        $data = [
-            [
-                'id'   => 1,
-                'nama' => 'Kasus Suspek',
-            ],
-            [
-                'id'   => 2,
-                'nama' => 'Kasus Probable',
-            ],
-            [
-                'id'   => 3,
-                'nama' => 'Kasus Konfirmasi',
-            ],
-            [
-                'id'   => 4,
-                'nama' => 'Kontak Erat',
-            ],
-            [
-                'id'   => 5,
-                'nama' => 'Pelaku Perjalanan',
-            ],
-            [
-                'id'   => 6,
-                'nama' => 'Discarded',
-            ],
-            [
-                'id'   => 7,
-                'nama' => 'Selesai Isolasi',
+        // Ubah kolom id tabel covid19_pemudik menjadi auto increment
+        $fields = [
+            'id' => [
+                'type'           => 'INT',
+                'constraint'     => 11,
+                'unsigned'       => true,
+                'auto_increment' => true,
             ],
         ];
+        $hasil = $hasil && $this->dbforge->modify_column('ref_status_covid', $fields);
 
-        $hasil = $hasil && $this->db->insert_batch('ref_status_covid', $data);
+        if ($hasil && $this->db->truncate('ref_status_covid')) {
+            // Sesuaikan tabel covid19_pemudik
+            $ref_status_covid = [
+                ['nama' => 'Kasus Suspek'],
+                ['nama' => 'Kasus Probable'],
+                ['nama' => 'Kasus Konfirmasi'],
+                ['nama' => 'Kontak Erat'],
+                ['nama' => 'Pelaku Perjalanan'],
+                ['nama' => 'Discarded'],
+                ['nama' => 'Selesai Isolasi'],
+            ];
+            $hasil = $hasil && $this->db->insert_batch('ref_status_covid', $ref_status_covid);
+        }
 
         // Ganti ODP & PDP jadi Suspek
         $hasil = $hasil && $this->db
@@ -210,11 +197,13 @@ class Migrasi_fitur_premium_2111 extends MY_Model
                 // Kalau folder desa/cache sudah ada, pindahkan file dari cache lama dan hapus cache lama
                 $files = scandir($cache_lama);
 
-                foreach ($files as $fname) {
-                    if ($fname != '.' && $fname != '..') {
-                        $hasil = $hasil && rename($cache_lama . '/' . $fname, $cache_desa . '/' . $fname);
-                        if (! $hasil) {
-                            log_message('error', print_r(error_get_last(), true));
+                if ($files) {
+                    foreach ($files as $fname) {
+                        if ($fname != '.' && $fname != '..') {
+                            $hasil = $hasil && rename($cache_lama . '/' . $fname, $cache_desa . '/' . $fname);
+                            if (! $hasil) {
+                                log_message('error', print_r(error_get_last(), true));
+                            }
                         }
                     }
                 }
@@ -277,28 +266,6 @@ class Migrasi_fitur_premium_2111 extends MY_Model
             }
         }
 
-        return $hasil && $this->tambah_indeks('tweb_keluarga', 'no_kk');
-    }
-
-    protected function migrasi_2021103171($hasil)
-    {
-        $hasil = $hasil && $this->tambah_modul([
-            'id'         => 331,
-            'modul'      => 'Pendaftaran Kerjasama',
-            'url'        => 'pendaftaran_kerjasama',
-            'aktif'      => 1,
-            'ikon'       => 'fa-list',
-            'urut'       => 6,
-            'level'      => 2,
-            'hidden'     => 0,
-            'ikon_kecil' => 'fa-list',
-            'parent'     => 200,
-        ]);
-
-        // Hapus cache menu navigasi
-        $this->load->driver('cache');
-        $this->cache->hapus_cache_untuk_semua('_cache_modul');
-
-        return $hasil;
+        return $hasil && $this->tambahIndeks('tweb_keluarga', 'no_kk');
     }
 }

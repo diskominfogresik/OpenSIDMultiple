@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -67,10 +67,10 @@ class Pembangunan_model extends MY_Model
         $this->lokasi_pembangunan_query();
         $this->db->select([
             'p.*',
-            'IF(p.sifat_proyek = "BARU", "&#10004", "-") as sifat_proyek_baru',
-            'IF(p.sifat_proyek = "LANJUTAN", "&#10004", "-") as sifat_proyek_lanjutan',
-            '(CASE WHEN MAX(CAST(d.persentase as UNSIGNED INTEGER)) IS NOT NULL THEN CONCAT(MAX(CAST(d.persentase as UNSIGNED INTEGER)), "%") ELSE CONCAT("belum ada progres") END) AS max_persentase',
-            'max(cast(d.persentase as unsigned integer)) as progress',
+            'IF(p.sifat_proyek = "BARU", "&#10004", "-") AS sifat_proyek_baru',
+            'IF(p.sifat_proyek = "LANJUTAN", "&#10004", "-") AS sifat_proyek_lanjutan',
+            '(CASE WHEN MAX(CAST(d.persentase AS UNSIGNED INTEGER)) IS NOT NULL THEN CONCAT(MAX(CAST(d.persentase as UNSIGNED INTEGER)), "%") ELSE CONCAT("belum ada progres") END) AS max_persentase',
+            'IF(p.perubahan_anggaran = 0, p.anggaran, p.perubahan_anggaran) AS jml_anggaran',
         ])
             ->from("{$this->table} p")
             ->join('pembangunan_ref_dokumentasi d', 'd.id_pembangunan = p.id', 'left')
@@ -107,20 +107,40 @@ class Pembangunan_model extends MY_Model
         return $this->paginasi($page_number, $jml_data);
     }
 
-    public function list_lokasi_pembangunan()
+    public function list_lokasi_pembangunan($status = null)
     {
         $this->lokasi_pembangunan_query();
 
+        if (null !== $status) {
+            $this->db->where('p.status = 1');
+        }
+
         return $this->db
             ->select('p.*')
-            ->from('pembangunan p')
-            ->where('p.status = 1')
+            ->from("{$this->table} p")
             ->join('tweb_wil_clusterdesa w', 'p.id_lokasi = w.id', 'left')
             ->get()
             ->result();
     }
 
     public function insert()
+    {
+        $post               = $this->input->post();
+        $data               = $this->validasi($post);
+        $data['created_at'] = date('Y-m-d H:i:s');
+
+        if (empty($data['foto'])) {
+            unset($data['foto']);
+        }
+
+        unset($data['file_foto'], $data['old_foto']);
+
+        $outp = $this->db->insert($this->table, $data);
+
+        status_sukses($outp);
+    }
+
+    public function update($id = 0)
     {
         $post = $this->input->post();
         $data = $this->validasi($post);
@@ -131,35 +151,19 @@ class Pembangunan_model extends MY_Model
 
         unset($data['file_foto'], $data['old_foto']);
 
-        $outp = $this->db->insert('pembangunan', $data);
-
-        status_sukses($outp);
-    }
-
-    public function update($id = 0)
-    {
-        $post               = $this->input->post();
-        $data               = $this->validasi($post);
-        $data['updated_at'] = date('Y-m-d H:i:s');
-
-        if (empty($data['foto'])) {
-            unset($data['foto']);
-        }
-
-        unset($data['file_foto'], $data['old_foto']);
-
         $this->db->where('id', $id);
-        $outp = $this->db->update('pembangunan', $data);
+        $outp = $this->db->update($this->table, $data);
 
         status_sukses($outp);
     }
 
-    private function validasi($post)
+    // TODO: Gunakan timestamps dan seragamkan.
+    private function validasi($post, $id = null)
     {
         return [
             'sumber_dana'             => $post['sumber_dana'],
             'judul'                   => $post['judul'],
-            'slug'                    => unique_slug($this->table, $post['judul']),
+            'slug'                    => unique_slug($this->table, $post['judul'], $id),
             'volume'                  => $post['volume'],
             'waktu'                   => $post['waktu'],
             'tahun_anggaran'          => $post['tahun_anggaran'],
@@ -176,6 +180,7 @@ class Pembangunan_model extends MY_Model
             'sumber_biaya_jumlah'     => $post['sumber_biaya_pemerintah'] + $post['sumber_biaya_provinsi'] + $post['sumber_biaya_kab_kota'] + $post['sumber_biaya_swadaya'],
             'manfaat'                 => $post['manfaat'],
             'sifat_proyek'            => $post['sifat_proyek'],
+            'updated_at'              => date('Y-m-d H:i:s'),
         ];
     }
 
@@ -272,15 +277,11 @@ class Pembangunan_model extends MY_Model
 
     public function list_filter_tahun()
     {
-        $this->get_tipe();
-
         return $this->db
-            ->select('p.tahun_anggaran')
+            ->select('tahun_anggaran')
             ->distinct()
-            ->from("{$this->table} p")
-            ->join('pembangunan_ref_dokumentasi d', 'd.id_pembangunan = p.id', 'left')
-            ->order_by('p.tahun_anggaran', 'desc')
-            ->get()
+            ->order_by('tahun_anggaran', 'DESC')
+            ->get($this->table)
             ->result();
     }
 
@@ -311,6 +312,11 @@ class Pembangunan_model extends MY_Model
 
         if ($this->tipe == 'rencana') {
             $this->db->where('d.persentase is NULL', null, false);
+        }
+
+        if ($this->tipe == 'hasil') {
+            $this->db->where('d.persentase !=', null);
+            $this->db->where('d.persentase =', '100%');
         }
     }
 

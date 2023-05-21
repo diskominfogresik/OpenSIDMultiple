@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,23 +37,14 @@
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
+use App\Models\Config;
+use OpenSpout\Reader\Common\Creator\ReaderEntityFactory;
+
 class Rtm_model extends MY_Model
 {
     public function __construct()
     {
         parent::__construct();
-        $this->load->model('config_model');
-    }
-
-    // Digunakan dimana ????
-    private function jenis_sql()
-    {
-        if (isset($_SESSION['jenis'])) {
-            $kh        = $_SESSION['jenis'];
-            $jenis_sql = " AND jenis = {$kh}";
-
-            return $jenis_sql;
-        }
     }
 
     public function insert()
@@ -128,16 +119,19 @@ class Rtm_model extends MY_Model
 
     public function add_anggota($id)
     {
-        $data   = $_POST;
+        $data   = $this->input->post('id_cb');
         $no_rtm = $this->db->select('no_kk')
             ->where('id', $id)
-            ->get('tweb_rtm')->row()->no_kk;
+            ->get('tweb_rtm')
+            ->row()
+            ->no_kk;
+
         $temp['id_rtm']     = $no_rtm;
         $temp['rtm_level']  = 2;
         $temp['updated_at'] = date('Y-m-d H:i:s');
         $temp['updated_by'] = $this->session->user;
 
-        $this->db->where('id', $data['nik']);
+        $this->db->where_in('id', $data);
         $outp = $this->db->update('tweb_penduduk', $temp);
 
         status_sukses($outp); //Tampilkan Pesan
@@ -146,10 +140,10 @@ class Rtm_model extends MY_Model
     // id = id_penduduk pd tweb_penduduk, id = nik_kepala pd tweb_rtm
     public function update_anggota($id, $id_rtm)
     {
-        // Krn tweb_penduduk menggunakan no_kk(no_rtm) bukan id sebagai id_rtm, jd perlu dicari dlu
+        // Krn penduduk_hidup menggunakan no_kk(no_rtm) bukan id sebagai id_rtm, jd perlu dicari dlu
         $no_rtm = $this->db->get_where('tweb_rtm', ['id' => $id_rtm])->row();
 
-        $rtm_level = $this->input->post('rtm_level');
+        $rtm_level = (string) $this->input->post('rtm_level');
 
         $data = [
             'rtm_level'  => $rtm_level,
@@ -157,12 +151,13 @@ class Rtm_model extends MY_Model
             'updated_by' => $this->session->user,
         ];
 
-        if ($rtm_level == 1) {
+        if ($rtm_level === '1') {
             // Ganti semua level penduduk dgn id_rtm yg sma -> rtm_level = 2 (Anggota)
             $this->db->where('id_rtm', $no_rtm->no_kk)->update('tweb_penduduk', ['rtm_level' => '2']);
 
             // nik_kepala = id_penduduk pd table tweb_penduduk
-            $this->db->where('id', $no_rtm->no_kk)->update('tweb_rtm', ['nik_kepala' => $id]);
+            // field no_kk pada tweb_rtm maksudnya adalah no_rtm
+            $this->db->where('id', $id_rtm)->update('tweb_rtm', ['nik_kepala' => $id]);
         }
 
         $outp = $this->db->where('id', $id)->update('tweb_penduduk', $data);
@@ -210,30 +205,49 @@ class Rtm_model extends MY_Model
 
     public function get_anggota($id)
     {
-        $sql   = 'SELECT * FROM tweb_penduduk WHERE id_rtm = ?';
-        $query = $this->db->query($sql, $id);
-
-        return $query->row_array();
+        return $this->db
+            ->get_where('penduduk_hidup', ['id' => $id])
+            ->row_array();
     }
 
     private function get_kode_wilayah()
     {
-        $data = $this->config_model->get_data();
-
-        return $data['kode_desa'];
+        return Config::first()->kode_desa;
     }
 
-    public function list_penduduk_lepas()
+    /**
+     * List penduduk lepas.
+     *
+     * @param mixed $id_kk ID KK (penduduk)
+     * @param mixed $id    ID RTM (rumah tangga)
+     *
+     * @return array
+     */
+    public function list_penduduk_lepas($id_kk = null, $id = null)
     {
-        $sql = 'SELECT p.id, p.nik, p.nama, h.nama as kk_level
-			FROM tweb_penduduk p
-			LEFT JOIN tweb_penduduk_hubungan h ON p.kk_level = h.id
-			WHERE (status = 1 OR status = 3) AND status_dasar = 1 AND (id_rtm = 0 OR id_rtm IS NULL)';
-        $query = $this->db->query($sql);
-        $data  = $query->result_array();
+        $query = $this->db->select('p.id, p.id_kk, p.nik, p.nama, h.nama as kk_level')
+            ->from('penduduk_hidup p')
+            ->join('keluarga_aktif k', 'p.id_kk = k.id', 'left')
+            ->join(' tweb_penduduk_hubungan h', 'p.kk_level = h.id', 'left')
+            ->join('tweb_rtm r', 'p.id_rtm = r.no_kk', 'left')
+            ->where('(status = 1 or status = 3) and status_dasar = 1 and (id_rtm = 0 OR id_rtm is null)');
+
+        if (! empty($id_kk)) {
+            $query->where('p.id_kk', $id_kk);
+        }
+
+        if (! empty($id)) {
+            $query->or_where('r.id', $id);
+        }
+
+        $data = $query->get()->result_array();
+
+        $no = 0;
 
         //Formating Output
         for ($i = 0; $i < count($data); $i++) {
+            $no++;
+            $data[$i]['no']     = $no;
             $data[$i]['alamat'] = 'Alamat :' . $data[$i]['nama'];
             $data[$i]['nama']   = '' . $data[$i]['nama'] . ' - ' . $data[$i]['kk_level'] . '';
         }
@@ -244,8 +258,8 @@ class Rtm_model extends MY_Model
     public function list_anggota($id)
     {
         $sql = 'SELECT b.dusun, b.rw, b.rt, u.id, nik, x.nama as sex, k.no_kk, u.rtm_level, tempatlahir, tanggallahir, a.nama as agama, d.nama as pendidikan, j.nama as pekerjaan, w.nama as status_kawin, f.nama as warganegara, nama_ayah, nama_ibu, g.nama as golongan_darah, u.nama, status, h.nama AS hubungan
-			FROM tweb_penduduk u
-			LEFT JOIN tweb_keluarga k ON u.id_kk = k.id
+			FROM penduduk_hidup u
+			LEFT JOIN keluarga_aktif k ON u.id_kk = k.id
 			LEFT JOIN tweb_penduduk_agama a ON u.agama_id = a.id
 			LEFT JOIN tweb_penduduk_pekerjaan j ON u.pekerjaan_id = j.id
 			LEFT JOIN tweb_penduduk_pendidikan_kk d ON u.pendidikan_kk_id = d.id
@@ -256,7 +270,9 @@ class Rtm_model extends MY_Model
 			LEFT JOIN tweb_rtm_hubungan h ON u.rtm_level = h.id
 			LEFT JOIN tweb_rtm r ON u.id_rtm = r.no_kk
 			LEFT JOIN tweb_wil_clusterdesa b ON u.id_cluster = b.id
-			WHERE r.id = ? ORDER BY rtm_level';
+            -- WHERE u.status_dasar = 1 AND
+            WHERE r.id = ?
+            ORDER BY rtm_level';
 
         $query = $this->db->query($sql, [$id]);
         $data  = $query->result_array();
@@ -274,22 +290,25 @@ class Rtm_model extends MY_Model
     public function get_kepala_rtm($id, $is_no_kk = false)
     {
         if (empty($id)) {
-            return;
+            return null;
         }
 
         $kolom_id = ($is_no_kk) ? 'no_kk' : 'id';
+
+        $data = $this->db
+            ->select("u.id, u.nik, u.nama, u.status_dasar, r.no_kk, r.bdt, x.nama AS sex, u.tempatlahir, u.tanggallahir, (SELECT DATE_FORMAT(FROM_DAYS(TO_DAYS(NOW()) - TO_DAYS(`tanggallahir`)), '%Y') + 0 FROM penduduk_hidup WHERE id = u.id) AS umur, d.nama as pendidikan, f.nama as warganegara, a.nama as agama, wil.rt, wil.rw, wil.dusun")
+            ->from('tweb_rtm r')
+            ->join('penduduk_hidup u', 'r.no_kk = u.id_rtm AND u.rtm_level = 1', 'left')
+            ->join('tweb_penduduk_sex x', 'u.sex = x.id', 'left')
+            ->join('tweb_penduduk_pendidikan_kk d', 'u.pendidikan_kk_id = d.id', 'left')
+            ->join('tweb_penduduk_warganegara f', 'u.warganegara_id = f.id', 'left')
+            ->join('tweb_penduduk_agama a', 'u.agama_id = a.id', 'left')
+            ->join('tweb_wil_clusterdesa wil', 'wil.id = u.id_cluster', 'left')
+            ->where("r.{$kolom_id}", $id)
+            ->get()
+            ->row_array();
+
         $this->load->model('penduduk_model');
-        $sql = "SELECT u.id, u.nik, u.nama, r.no_kk, r.bdt, x.nama AS sex, u.tempatlahir, u.tanggallahir, (SELECT DATE_FORMAT(FROM_DAYS(TO_DAYS(NOW()) - TO_DAYS(`tanggallahir`)), '%Y') + 0 FROM tweb_penduduk WHERE id = u.id) AS umur, d.nama as pendidikan, f.nama as warganegara, a.nama as agama, wil.rt, wil.rw, wil.dusun
-			FROM tweb_rtm r
-			LEFT JOIN tweb_penduduk u ON u.id = r.nik_kepala
-			LEFT JOIN tweb_penduduk_sex x ON u.sex = x.id
-			LEFT JOIN tweb_penduduk_pendidikan_kk d ON u.pendidikan_kk_id = d.id
-			LEFT JOIN tweb_penduduk_warganegara f ON u.warganegara_id = f.id
-			LEFT JOIN tweb_penduduk_agama a ON u.agama_id = a.id
-			LEFT JOIN tweb_wil_clusterdesa wil ON wil.id = u.id_cluster
-			WHERE r.{$kolom_id} = {$id} LIMIT 1";
-        $query                  = $this->db->query($sql);
-        $data                   = $query->row_array();
         $data['alamat_wilayah'] = $this->penduduk_model->get_alamat_wilayah($data['id']);
 
         return $data;
@@ -340,7 +359,9 @@ class Rtm_model extends MY_Model
         $this->db
             ->select('t.nama')
             ->from('tweb_rtm u')
-            ->join('tweb_penduduk t', 'u.nik_kepala = t.id', LEFT);
+            ->join('penduduk_hidup t', 'u.nik_kepala = t.id', 'LEFT');
+
+        $this->status_dasar_sql();
 
         $data = $this->db->get()->result_array();
 
@@ -355,11 +376,11 @@ class Rtm_model extends MY_Model
         $query_dasar = $this->db->select('u.*')->get_compiled_select();
 
         $this->db
-            ->select('u.id, u.no_kk, t.foto, t.nama AS kepala_kk, t.nik, t.sex as id_sex, k.alamat, c.dusun, c.rw, c.rt, u.tgl_daftar')
-            ->select('(SELECT COUNT(p.id) FROM tweb_penduduk p WHERE p.id_rtm = u.no_kk ) AS jumlah_anggota')
+            ->select('u.id, u.no_kk, t.foto, t.nama AS kepala_kk, t.nik, t.status_dasar, t.sex as id_sex, k.alamat, c.dusun, c.rw, c.rt, u.tgl_daftar')
+            ->select('(SELECT COUNT(p.id) FROM penduduk_hidup p WHERE p.id_rtm = u.no_kk ) AS jumlah_anggota')
             ->from("({$query_dasar}) as u")
-            ->join('tweb_penduduk t', 'u.no_kk = t.id_rtm AND t.rtm_level = 1', 'left')
-            ->join('tweb_keluarga k', 't.id_kk = k.id', 'left')
+            ->join('penduduk_hidup t', 'u.no_kk = t.id_rtm AND t.rtm_level = 1', 'left')
+            ->join('keluarga_aktif k', 't.id_kk = k.id', 'left')
             ->join('tweb_wil_clusterdesa c', 't.id_cluster = c.id', 'left');
 
         $this->order_by_list($this->session->order_by);
@@ -382,19 +403,26 @@ class Rtm_model extends MY_Model
     private function order_by_list($order_by)
     {
         switch ($order_by) {
-            case 1: $this->db->order_by('u.no_kk'); break;
+            case 1: $this->db->order_by('u.no_kk');
+                break;
 
-            case 2: $this->db->order_by('u.no_kk', DESC); break;
+            case 2: $this->db->order_by('u.no_kk', 'DESC');
+                break;
 
-            case 3: $this->db->order_by('t.nama'); break;
+            case 3: $this->db->order_by('t.nama');
+                break;
 
-            case 4: $this->db->order_by('t.nama', DESC); break;
+            case 4: $this->db->order_by('t.nama', 'DESC');
+                break;
 
-            case 5: $this->db->order_by('u.tgl_daftar'); break;
+            case 5: $this->db->order_by('u.tgl_daftar');
+                break;
 
-            case 6: $this->db->order_by('u.tgl_daftar', DESC); break;
+            case 6: $this->db->order_by('u.tgl_daftar', 'DESC');
+                break;
 
-            default: $this->db->order_by('u.no_kk'); break;
+            default: $this->db->order_by('u.no_kk');
+                break;
         }
     }
 
@@ -438,7 +466,7 @@ class Rtm_model extends MY_Model
     {
         $this->db
             ->from('tweb_rtm u')
-            ->join('tweb_penduduk t', 'u.no_kk = t.id_rtm AND t.rtm_level = 1', 'left')
+            ->join('penduduk_hidup t', 'u.no_kk = t.id_rtm AND t.rtm_level = 1', 'left')
             ->join('tweb_wil_clusterdesa c', 't.id_cluster = c.id', 'left');
 
         if ($this->session->penerima_bantuan) {
@@ -463,6 +491,8 @@ class Rtm_model extends MY_Model
         foreach ($kolom_kode as $kolom) {
             $this->get_sql_kolom_kode($kolom[0], $kolom[1]);
         }
+
+        $this->status_dasar_sql();
     }
 
     private function search_sql()
@@ -476,6 +506,16 @@ class Rtm_model extends MY_Model
             ->like('t.nama', $cari)
             ->or_like('u.no_kk', $cari)
             ->group_end();
+    }
+
+    protected function status_dasar_sql()
+    {
+        $status_dasar = $this->session->status_dasar;
+        if ($status_dasar == 1) {
+            $this->db->where('t.status_dasar', 1);
+        } elseif ($status_dasar == 2) {
+            $this->db->where('t.status_dasar', null);
+        }
     }
 
     protected function get_sql_kolom_kode($session, $kolom)
@@ -518,5 +558,156 @@ class Rtm_model extends MY_Model
         }
 
         return $judul;
+    }
+
+    /**
+     * Impor Pengelompokan Data Rumah Tangga
+     * Alur :
+     * Cek apakah NIK ada atau tidak.
+     * 1. Jika Ya, update data penduduk (rtm) berdasarkan data impor.
+     * 2. Jika Tidak, tampilkan notifikasi baris data yang gagal.
+     *
+     * @param mixed $hapus
+     */
+    public function impor()
+    {
+        $this->load->library('upload');
+
+        $config['upload_path']   = sys_get_temp_dir();
+        $config['allowed_types'] = 'xls|xlsx|xlsm';
+
+        $this->upload->initialize($config);
+
+        if (! $this->upload->do_upload('userfile')) {
+            return session_error($this->upload->display_errors());
+        }
+
+        $upload = $this->upload->data();
+
+        $reader = ReaderEntityFactory::createXLSXReader();
+        $reader->open($_FILES['userfile']['tmp_name']);
+
+        $outp = true;
+
+        foreach ($reader->getSheetIterator() as $sheet) {
+            $baris_pertama = false;
+            $gagal         = 0;
+            $nomor_baris   = 0;
+            $pesan         = '';
+
+            if ($sheet->getName() === 'RTM') {
+                foreach ($sheet->getRowIterator() as $row) {
+                    // Abaikan baris pertama yg berisi nama kolom
+                    if (! $baris_pertama) {
+                        $baris_pertama = true;
+
+                        continue;
+                    }
+
+                    $nomor_baris++;
+
+                    $rowData = [];
+                    $cells   = $row->getCells();
+
+                    foreach ($cells as $cell) {
+                        $rowData[] = $cell->getValue();
+                    }
+                    //ID RuTa
+                    $id_rtm = $rowData[1];
+
+                    if (empty($id_rtm)) {
+                        $pesan .= "Pesan Gagal : Baris {$nomor_baris} Nomer Rumah Tannga Tidak Boleh Kosong</br>";
+                        $gagal++;
+                        $outp = false;
+
+                        continue;
+                    }
+
+                    //Level
+                    $rtm_level = (int) $rowData[2];
+
+                    if (empty($rtm_level)) {
+                        $pesan .= "Pesan Gagal : Baris {$nomor_baris} Kode Hubungan Rumah Tangga Tidak Diketahui</br>";
+                        $gagal++;
+                        $outp = false;
+
+                        continue;
+                    }
+
+                    if ($rtm_level > 1) {
+                        $rtm_level = 2;
+                    }
+
+                    //NIK
+                    $nik = $rowData[0];
+
+                    if (empty($nik)) {
+                        $pesan .= "Pesan Gagal : Baris {$nomor_baris} NIK Tidak Boleh Kosong</br>";
+                        $gagal++;
+                        $outp = false;
+
+                        continue;
+                    }
+
+                    if ($penduduk = $this->cekPenduduk($nik)) {
+                        $ada = [
+                            'id_rtm'     => $id_rtm,
+                            'rtm_level'  => $rtm_level,
+                            'updated_at' => date('Y-m-d H:i:s'),
+                            'updated_by' => $this->session->user,
+                        ];
+
+                        if (! $this->db->where('nik', $nik)->update('tweb_penduduk', $ada)) {
+                            $pesan .= "Pesan Gagal : Baris {$nomor_baris} Data penduduk dengan NIK : { {$nik} } gagal disimpan</br>";
+                            $gagal++;
+                            $outp = false;
+
+                            continue;
+                        }
+
+                        if ($rtm_level == 1) {
+                            $dataRTM = [
+                                'nik_kepala' => $penduduk['id'],
+                                'no_kk'      => $id_rtm,
+                            ];
+
+                            $sql = $this->db->insert_string('tweb_rtm', $dataRTM) . ' ON DUPLICATE KEY UPDATE nik_kepala = VALUES(nik_kepala), no_kk = VALUES(no_kk)';
+                            if (! $this->db->query($sql)) {
+                                $pesan .= "Pesan Gagal : Baris {$nomor_baris} Data penduduk dengan NIK : {$nik} gagal disimpan</br>";
+                                $gagal++;
+                                $outp = false;
+
+                                continue;
+                            }
+                        }
+                    } else {
+                        $pesan .= "Pesan Gagal : Baris {$nomor_baris} Data penduduk dengan NIK : {$nik} tidak ditemukan</br>";
+                        $gagal++;
+                        $outp = false;
+                    }
+                }
+                $berhasil = ($nomor_baris - $gagal);
+                $pesan .= "Jumlah Berhasil : {$berhasil} </br>";
+                $pesan .= "Jumlah Gagal : {$gagal} </br>";
+                $pesan .= "Jumlah Data : {$nomor_baris} </br>";
+
+                break;
+            }
+
+            return session_error('-> File impor tidak sesuai');
+        }
+        $reader->close();
+        set_session('pesan_rtm', $pesan);
+
+        return status_sukses($outp, false, 'Terjadi kesalahan impor data RTM');
+    }
+
+    private function cekPenduduk($nik = '')
+    {
+        return $this->db
+            ->select('id', 'nama')
+            ->where('nik', $nik)
+            ->get('tweb_penduduk')
+            ->row_array();
     }
 }

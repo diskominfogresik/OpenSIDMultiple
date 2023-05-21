@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -51,19 +51,17 @@ class First_artikel_m extends CI_Model
 
     public function get_headline()
     {
-        $sql = 'SELECT a.*, u.nama AS owner, YEAR(tgl_upload) as thn, MONTH(tgl_upload) as bln, DAY(tgl_upload) as hri
-			FROM artikel a
-			LEFT JOIN user u ON a.id_user = u.id
-			WHERE headline = 1 AND a.tgl_upload < NOW()
-			ORDER BY tgl_upload DESC LIMIT 1 ';
-        $query = $this->db->query($sql);
-        $data  = $query->row_array();
+        $data = $this->db
+            ->select('a.*, u.nama AS owner, YEAR(tgl_upload) as thn, MONTH(tgl_upload) as bln, DAY(tgl_upload) as hri')
+            ->from('artikel a')
+            ->join('user u', 'a.id_user = u.id', 'LEFT')
+            ->where('headline = 1')
+            ->where('a.tgl_upload <', date('Y-m-d H:i:s'))
+            ->order_by('tgl_upload DESC')
+            ->get()
+            ->row_array();
         if (empty($data)) {
             $data = null;
-        } else {
-            $id = $data['id'];
-            //$panjang=str_split($data['isi'],800);
-            //$data['isi'] = "<label>".strip_tags($panjang[0])."...</label><a href='".site_url("artikel/$id")."'>Baca Selengkapnya</a>";
         }
 
         return $data;
@@ -94,7 +92,7 @@ class First_artikel_m extends CI_Model
     {
         $this->db->select('COUNT(a.id) AS jml');
         $this->paging_artikel_sql();
-        $cari = trim($this->input->get('cari'));
+        $cari = trim($this->input->get('cari', true));
         if (! empty($cari)) {
             $cari          = $this->db->escape_like_str($cari);
             $cfg['suffix'] = "?cari={$cari}";
@@ -120,9 +118,9 @@ class First_artikel_m extends CI_Model
             ->where('a.enabled', 1)
             ->where('a.headline <>', 1)
             ->where('a.id_kategori NOT IN (1000)')
-            ->where('a.tgl_upload < NOW()');
+            ->where('a.tgl_upload <', date('Y-m-d H:i:s'));
 
-        $cari = trim($this->input->get('cari'));
+        $cari = trim($this->input->get('cari', true));
         if (! empty($cari)) {
             $this->db
                 ->group_start()
@@ -173,7 +171,7 @@ class First_artikel_m extends CI_Model
             ->select('a.*, YEAR(tgl_upload) AS thn, MONTH(tgl_upload) AS bln, DAY(tgl_upload) AS hri')
             ->where('a.enabled', 1)
             ->where('a.id_kategori NOT IN (1000)')
-            ->where('a.tgl_upload < NOW()');
+            ->where('a.tgl_upload <', date('Y-m-d H:i:s'));
 
         switch ($type) {
             case 'acak':
@@ -181,11 +179,11 @@ class First_artikel_m extends CI_Model
                 break;
 
             case 'populer':
-                $this->db->order_by('a.hit', DESC);
+                $this->db->order_by('a.hit', 'DESC');
                 break;
 
             default:
-                $this->db->order_by('a.tgl_upload', DESC);
+                $this->db->order_by('a.tgl_upload', 'DESC');
                 break;
         }
 
@@ -201,9 +199,16 @@ class First_artikel_m extends CI_Model
 
     public function paging_arsip($p = 1)
     {
-        $sql      = 'SELECT COUNT(a.id) AS id FROM artikel a LEFT JOIN user u ON a.id_user = u.id LEFT JOIN kategori k ON a.id_kategori = k.id WHERE a.enabled=1 AND a.tgl_upload < NOW()';
-        $query    = $this->db->query($sql);
-        $row      = $query->row_array();
+        $row = $this->db
+            ->select('COUNT(a.id) AS id')
+            ->from('artikel a')
+            ->join('user u', 'a.id_user = u.id', 'LEFT')
+            ->join('kategori k', 'a.id_kategori = k.id', 'left')
+            ->where('a.enabled=1')
+            ->where('a.tgl_upload <', date('Y-m-d H:i:s'))
+            ->order_by('tgl_upload DESC')
+            ->get()
+            ->row_array();
         $jml_data = $row['id'];
 
         $this->load->library('paging');
@@ -217,15 +222,17 @@ class First_artikel_m extends CI_Model
 
     public function full_arsip($offset = 0, $limit = 50)
     {
-        $paging_sql = ' LIMIT ' . $offset . ',' . $limit;
-        $sql        = 'SELECT a.*,u.nama AS owner,k.kategori, YEAR(tgl_upload) as thn, MONTH(tgl_upload) as bln, DAY(tgl_upload) as hri FROM artikel a LEFT JOIN user u ON a.id_user = u.id LEFT JOIN kategori k ON a.id_kategori = k.id WHERE a.enabled=?
-			AND a.tgl_upload < NOW()
-		ORDER BY a.tgl_upload DESC';
-
-        $sql .= $paging_sql;
-
-        $query = $this->db->query($sql, 1);
-        $data  = $query->result_array();
+        $query = $this->db
+            ->select('a.*,u.nama AS owner,k.kategori, YEAR(tgl_upload) as thn, MONTH(tgl_upload) as bln, DAY(tgl_upload) as hri')
+            ->from('artikel a')
+            ->join('user u', 'a.id_user = u.id', 'LEFT')
+            ->join('kategori k', 'a.id_kategori = k.id', 'left')
+            ->where('a.enabled=1')
+            ->where('a.tgl_upload <', date('Y-m-d H:i:s'))
+            ->order_by('a.tgl_upload', 'DESC')
+            ->limit($limit, $offset)
+            ->get();
+        $data = $query->result_array();
         if ($query->num_rows() > 0) {
             for ($i = 0; $i < count($data); $i++) {
                 $nomer           = $offset + $i + 1;
@@ -250,7 +257,7 @@ class First_artikel_m extends CI_Model
             ->where('enabled', 1)
             ->where('headline', 3)
             ->where($gambar . ' !=', '')
-            ->where('tgl_upload < NOW()');
+            ->where('tgl_upload <', date('Y-m-d H:i:s'));
 
         return $this->db->get_compiled_select();
     }
@@ -288,7 +295,7 @@ class First_artikel_m extends CI_Model
                     ->select('id, judul, gambar, slug, YEAR(tgl_upload) as thn, MONTH(tgl_upload) as bln, DAY(tgl_upload) as hri')
                     ->where('enabled', 1)
                     ->where('gambar !=', '')
-                    ->where('tgl_upload < NOW()')
+                    ->where('tgl_upload <', date('Y-m-d H:i:s'))
                     ->order_by('tgl_upload DESC')
                     ->limit(10)->get('artikel')->result_array();
                 $slider_gambar['lokasi'] = LOKASI_FOTO_ARTIKEL;
@@ -355,7 +362,7 @@ class First_artikel_m extends CI_Model
             ->join('artikel a', 'k.id_artikel = a.id')
             ->where('k.status', 1)
             ->where('k.id_artikel <>', 775)
-            ->order_by('k.tgl_upload', DESC)
+            ->order_by('k.tgl_upload', 'DESC')
             ->limit(10)
             ->get()
             ->result_array();
@@ -390,18 +397,23 @@ class First_artikel_m extends CI_Model
         return $data;
     }
 
-    public function get_artikel($url)
+    public function get_artikel($thn, $bln, $hr, $url)
     {
         $this->db->select('a.*, u.nama AS owner, k.kategori, k.slug AS kat_slug, YEAR(tgl_upload) AS thn, MONTH(tgl_upload) AS bln, DAY(tgl_upload) AS hri')
             ->from('artikel a')
             ->join('user u', 'a.id_user = u.id', 'left')
             ->join('kategori k', 'a.id_kategori = k.id', 'left')
             ->where('a.enabled', 1)
-            ->where('a.tgl_upload < NOW()')
-            ->group_start()
-            ->where('a.slug', $url)
-            ->or_where('a.id', $url)
-            ->group_end();
+            ->where('a.tgl_upload <', date('Y-m-d H:i:s'))
+            ->where('YEAR(a.tgl_upload)', $thn)
+            ->where('MONTH(a.tgl_upload)', $bln)
+            ->where('DAY(a.tgl_upload)', $hr);
+
+        if (is_numeric($url)) {
+            $this->db->where('a.id', $url);
+        } else {
+            $this->db->where('a.slug', $url);
+        }
 
         $query = $this->db->get();
 
@@ -452,7 +464,7 @@ class First_artikel_m extends CI_Model
             ->join('user u', 'a.id_user = u.id', 'left')
             ->join('kategori k', 'a.id_kategori = k.id', 'left')
             ->where('a.enabled', 1)
-            ->where('tgl_upload < NOW()');
+            ->where('a.tgl_upload <', date('Y-m-d H:i:s'));
 
         if (! empty($id)) {
             $this->db
@@ -467,7 +479,7 @@ class First_artikel_m extends CI_Model
     {
         $this->list_artikel_sql($id);
         $this->db->select('a.*, u.nama AS owner, k.kategori, k.slug AS kat_slug, YEAR(tgl_upload) AS thn, MONTH(tgl_upload) AS bln, DAY(tgl_upload) AS hri');
-        $this->db->order_by('a.tgl_upload', DESC);
+        $this->db->order_by('a.tgl_upload', 'DESC');
         $this->db->limit($limit, $offset);
         $data = $this->db->get()->result_array();
 
@@ -543,6 +555,10 @@ class First_artikel_m extends CI_Model
 
     public function get_artikel_by_id($id)
     {
-        return $this->db->select('slug, YEAR(tgl_upload) AS thn, MONTH(tgl_upload) AS bln, DAY(tgl_upload) AS hri')->where(['id' => $id])->get('artikel')->row_array();
+        return $this->db
+            ->select('slug, YEAR(tgl_upload) AS thn, MONTH(tgl_upload) AS bln, DAY(tgl_upload) AS hri')
+            ->where(['id' => $id])
+            ->get('artikel')
+            ->row_array();
     }
 }

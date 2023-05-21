@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,7 +37,7 @@
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
-use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
+use OpenSpout\Reader\Common\Creator\ReaderEntityFactory;
 
 class Analisis_import_model extends CI_Model
 {
@@ -58,14 +58,11 @@ class Analisis_import_model extends CI_Model
         $this->load->library('upload');
 
         $config['upload_path']   = sys_get_temp_dir();
-        $config['allowed_types'] = 'xlsx|xlsm';
+        $config['allowed_types'] = 'xlsx';
 
         $this->upload->initialize($config);
         if (! $this->upload->do_upload('userfile')) {
-            $this->session->error_msg = $this->upload->display_errors();
-            $this->session->success   = -1;
-
-            return;
+            return session_error($this->upload->display_errors());
         }
         $upload = $this->upload->data();
 
@@ -85,6 +82,7 @@ class Analisis_import_model extends CI_Model
 
         $reader = ReaderEntityFactory::createReaderFromFile($file);
         $reader->open($file);
+        $id_master = null;
 
         foreach ($reader->getSheetIterator() as $sheet) {
             switch ($sheet->getName()) {
@@ -105,8 +103,7 @@ class Analisis_import_model extends CI_Model
                     break;
 
                 default:
-                    $this->session->success   = -1;
-                    $this->session->error_msg = 'Bukan file impor master analisis';
+                    session_error('Bukan file impor master analisis');
                     break;
             }
             if ($this->session->success == -1) {
@@ -175,9 +172,7 @@ class Analisis_import_model extends CI_Model
 
     private function impor_error()
     {
-        $error                    = $this->db->error();
-        $this->session->success   = -1;
-        $this->session->error_msg = $error['message'];
+        return session_error($this->db->error()['message']);
     }
 
     private function impor_pertanyaan($sheet, $id_master)
@@ -188,14 +183,18 @@ class Analisis_import_model extends CI_Model
             } // Abaikan baris judul
             $cells = $row->getCells();
             // Tambahkan indikator
-            $indikator                 = [];
-            $indikator['id_master']    = $id_master;
-            $indikator['nomor']        = $cells[0]->getValue();
-            $indikator['pertanyaan']   = $cells[1]->getValue();
-            $indikator['id_kategori']  = $this->get_id_kategori($cells[2]->getValue(), $id_master);
-            $indikator['id_tipe']      = $cells[3]->getValue();
-            $indikator['bobot']        = $cells[4]->getValue() ?? 0;
-            $indikator['act_analisis'] = $cells[5]->getValue() ?? 2;
+            $indikator                = [];
+            $indikator['id_master']   = $id_master;
+            $indikator['nomor']       = $cells[0]->getValue();
+            $indikator['pertanyaan']  = $cells[1]->getValue();
+            $indikator['id_kategori'] = $this->get_id_kategori($cells[2]->getValue(), $id_master);
+            $indikator['id_tipe']     = $cells[3]->getValue();
+            if (! empty($cells[4]) && $cells[4]->getValue()) {
+                $indikator['bobot'] = (int) $cells[4]->getValue();
+            }
+            if (! empty($cells[5]) && $cells[5]->getValue()) {
+                $indikator['act_analisis'] = $cells[5]->getValue();
+            }
             if (! $this->db->insert('analisis_indikator', $indikator)) {
                 return $this->impor_error();
             }
@@ -234,9 +233,13 @@ class Analisis_import_model extends CI_Model
             // Tambahkan parameter
             $parameter                 = [];
             $parameter['id_indikator'] = $this->get_id_indikator($cells[0]->getValue(), $id_master);
-            $parameter['kode_jawaban'] = $cells[1]->getValue();
             $parameter['jawaban']      = $cells[2]->getValue();
-            $parameter['nilai']        = $cells[3]->getValue();
+            if (! empty($cells[1]) && $cells[1]->getValue()) {
+                $parameter['kode_jawaban'] = $cells[1]->getValue();
+            }
+            if (! empty($cells[3]) && $cells[3]->getValue()) {
+                $parameter['nilai'] = $cells[3]->getValue();
+            }
             if (! $this->db->insert('analisis_parameter', $parameter)) {
                 return $this->impor_error();
             }

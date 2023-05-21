@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2022 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -100,7 +100,7 @@ class Migrasi_fitur_premium_2010 extends MY_model
         $hasil = $hasil && $this->dbforge->modify_column('kelompok', $field);
 
         // Tambah menu IDM
-        $modul = [
+        $hasil = $hasil && $this->tambah_modul([
             'id'         => '101',
             'modul'      => 'Status ' . ucwords($this->setting->sebutan_desa),
             'url'        => 'status_desa',
@@ -111,11 +111,10 @@ class Migrasi_fitur_premium_2010 extends MY_model
             'parent'     => '200',
             'hidden'     => '0',
             'ikon_kecil' => '',
-        ];
-        $hasil = $hasil && $this->tambah_modul($modul);
+        ]);
 
         // Tambah modul Lembaran Desa
-        $modul = [
+        return $hasil && $this->tambah_modul([
             'id'         => '311',
             'modul'      => 'Buku Lembaran Dan Berita Desa',
             'url'        => 'lembaran_desa/clear',
@@ -126,8 +125,6 @@ class Migrasi_fitur_premium_2010 extends MY_model
             'parent'     => '302',
             'hidden'     => '0',
             'ikon_kecil' => '',
-        ];
-
-        return $hasil && $this->tambah_modul($modul);
+        ]);
     }
 }

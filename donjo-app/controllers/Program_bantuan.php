@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,10 +37,13 @@
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
-use Box\Spout\Common\Entity\Style\Color;
-use Box\Spout\Reader\Common\Creator\ReaderEntityFactory;
-use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
-use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
+use App\Enums\SasaranEnum;
+use App\Models\BantuanPeserta;
+use App\Models\Config;
+use OpenSpout\Common\Entity\Style\Color;
+use OpenSpout\Reader\Common\Creator\ReaderEntityFactory;
+use OpenSpout\Writer\Common\Creator\Style\StyleBuilder;
+use OpenSpout\Writer\Common\Creator\WriterEntityFactory;
 
 class Program_bantuan extends Admin_Controller
 {
@@ -81,12 +84,8 @@ class Program_bantuan extends Admin_Controller
             $this->session->per_page = $per_page;
         }
 
-        $data                           = $this->program_bantuan_model->get_program($p, false);
-        $data['penjelasan_pembersihan'] = '
-			<p>Fitur ini akan mancari sasaran (penduduk, keluarga, rumah tangga, kelompok) peserta yang sudah terhapus dari database.</p>
-			<p>Supaya konsisten, fitur ini akan menghapus peserta tersebut dari program bantuannya.</p>
-			<p>Fitur ini juga akan menghapus peserta duplikat dari program bantuannya.</p>';
-        $data['list_sasaran'] = unserialize(SASARAN);
+        $data                 = $this->program_bantuan_model->get_program($p, false);
+        $data['list_sasaran'] = SasaranEnum::DAFTAR;
         $data['func']         = 'index';
         $data['per_page']     = $this->session->per_page;
         $data['set_page']     = $this->_set_page;
@@ -117,6 +116,14 @@ class Program_bantuan extends Admin_Controller
     public function panduan()
     {
         $this->render('program_bantuan/panduan');
+    }
+
+    public function detail_clear($program_id)
+    {
+        $this->session->per_page = $this->_set_page[0];
+        $this->session->unset_userdata('cari');
+
+        redirect("program_bantuan/detail/{$program_id}");
     }
 
     public function detail($program_id = 0, $p = 1)
@@ -172,7 +179,14 @@ class Program_bantuan extends Admin_Controller
     public function add_peserta($program_id = 0)
     {
         $this->redirect_hak_akses('u');
-        $this->program_bantuan_model->add_peserta($program_id);
+
+        $cek = BantuanPeserta::where('program_id', $program_id)->where('kartu_id_pend', $this->input->post('kartu_id_pend'))->first();
+
+        if ($cek) {
+            $this->session->success = -2;
+        } else {
+            $this->program_bantuan_model->add_peserta($program_id);
+        }
 
         $redirect = ($this->session->userdata('aksi') != 1) ? $_SERVER['HTTP_REFERER'] : "program_bantuan/detail/{$program_id}";
 
@@ -232,7 +246,6 @@ class Program_bantuan extends Admin_Controller
         $this->form_validation->set_rules('sdate', 'Tanggal awal', 'required');
         $this->form_validation->set_rules('edate', 'Tanggal akhir', 'required');
         $this->form_validation->set_rules('asaldana', 'Asal Dana', 'required');
-        $this->form_validation->set_rules('status', 'Status', 'required');
 
         $data['asaldana'] = unserialize(ASALDANA);
 
@@ -256,7 +269,6 @@ class Program_bantuan extends Admin_Controller
         $this->form_validation->set_rules('sdate', 'Tanggal awal', 'required');
         $this->form_validation->set_rules('edate', 'Tanggal akhir', 'required');
         $this->form_validation->set_rules('asaldana', 'Asal Dana', 'required');
-        $this->form_validation->set_rules('status', 'Status', 'required');
 
         $data['asaldana'] = unserialize(ASALDANA);
         $data['program']  = $this->program_bantuan_model->get_program(1, $id);
@@ -294,7 +306,7 @@ class Program_bantuan extends Admin_Controller
             $this->session->per_page = 1000000000; // Angka besar supaya semua data terunduh
             $data['sasaran']         = unserialize(SASARAN);
 
-            $data['config']          = $this->config_model->get_data();
+            $data['config']          = Config::first();
             $data['peserta']         = $this->program_bantuan_model->get_program(1, $program_id);
             $data['aksi']            = $aksi;
             $this->session->per_page = $temp;
@@ -371,6 +383,12 @@ class Program_bantuan extends Admin_Controller
                         // Data terakhir
                         if ($title == '###') {
                             break;
+                        }
+
+                        if (in_array($no_baris, [5, 6]) && ! validate_date($value, 'Y-m-d')) {
+                            session_error(', Data program baris <b> Ke-' . ($no_baris) . '</b> berisi tanggal yang salah. Cek kembali data ' . $title . ' = ' . $value);
+
+                            redirect($this->controller);
                         }
 
                         switch (true) {
@@ -464,6 +482,26 @@ class Program_bantuan extends Admin_Controller
                             $pesan_peserta .= '- Data peserta baris <b> Ke-' . ($no_baris) . '</b> ditambahkan menggantikan data lama <br>';
                         }
 
+                        // Jika kosong ambil data dari database
+                        $no_id_kartu         = (string) $cells[1];
+                        $kartu_nama          = (string) $cells[3];
+                        $kartu_tempat_lahir  = (string) $cells[4];
+                        $kartu_tanggal_lahir = (string) $cells[5];
+                        $kartu_alamat        = (string) $cells[6];
+
+                        if (empty($kartu_tanggal_lahir)) {
+                            $kartu_tanggal_lahir = $cek_penduduk['tanggallahir'];
+                        } else {
+                            if (! validate_date($kartu_tanggal_lahir, 'Y-m-d')) {
+                                $no_gagal++;
+                                $pesan_peserta .= '- Data peserta baris <b> Ke-' . ($no_baris) . '</b> berisi tanggal yang salah<br>';
+
+                                continue;
+                            }
+
+                            $kartu_tanggal_lahir = $this->cek_is_date($kartu_tanggal_lahir);
+                        }
+
                         // Random no. kartu peserta
                         if ($rand_kartu_peserta == 1) {
                             $no_id_kartu = 'acak_' . random_int(1, 1000);
@@ -479,12 +517,12 @@ class Program_bantuan extends Admin_Controller
                         $simpan = [
                             'peserta'             => $peserta,
                             'program_id'          => $program_id,
-                            'no_id_kartu'         => ((string) $cells[1]) ? $cells[1] : $no_id_kartu,
+                            'no_id_kartu'         => $no_id_kartu,
                             'kartu_nik'           => $nik,
-                            'kartu_nama'          => ((string) $cells[3]) ? $cells[3] : $cek_penduduk['nama'],
-                            'kartu_tempat_lahir'  => ((string) $cells[4]) ? $cells[4] : $cek_penduduk['tempatlahir'],
-                            'kartu_tanggal_lahir' => ($cells[5]) ? $this->cek_is_date($cells[5]) : $cek_penduduk['tanggallahir'],
-                            'kartu_alamat'        => ((string) $cells[6]) ? $cells[6] : $cek_penduduk['alamat_wilayah'],
+                            'kartu_nama'          => $kartu_nama ?: $cek_penduduk['nama'],
+                            'kartu_tempat_lahir'  => $kartu_tempat_lahir ?: $cek_penduduk['tempatlahir'],
+                            'kartu_tanggal_lahir' => $kartu_tanggal_lahir,
+                            'kartu_alamat'        => $kartu_alamat ?: $cek_penduduk['alamat_wilayah'],
                             'kartu_id_pend'       => $cek_penduduk['id'],
                         ];
 
@@ -514,10 +552,9 @@ class Program_bantuan extends Admin_Controller
             $this->session->per_page = $temp;
 
             redirect("{$this->controller}/detail/{$program_id}");
-        } else {
-            $this->session->error_msg = $this->upload->display_errors();
-            $this->session->success   = -1;
         }
+
+        return session_error($this->upload->display_errors());
     }
 
     // TODO: function ini terlalu panjang dan sebaiknya dipecah menjadi beberapa method
@@ -619,25 +656,18 @@ class Program_bantuan extends Admin_Controller
     // TODO: ubah peserta menggunakan id untuk semua sasaran dan gunakan relasi database delete cascade
     public function bersihkan_data()
     {
-        $this->session->success = 1;
-        $invalid                = [];
-        $list_sasaran           = array_keys($this->referensi_model->list_ref(SASARAN));
+        $invalid      = [];
+        $list_sasaran = array_keys($this->referensi_model->list_ref(SASARAN));
 
         foreach ($list_sasaran as $sasaran) {
-            $invalid = array_merge($invalid, $this->bersihkan_peserta($sasaran));
+            $invalid = array_merge($invalid, $this->program_bantuan_model->peserta_tidak_valid($sasaran));
         }
-        if ($this->session->success == -1) {
-            redirect('program_bantuan');
-        }
+
         $duplikat     = [];
         $list_program = $this->program_bantuan_model->list_program();
 
         foreach ($list_program as $program) {
-            $duplikat = array_merge($duplikat, $this->bersihkan_duplikat($program));
-        }
-
-        if ($this->session->success == -1) {
-            redirect('program_bantuan');
+            $duplikat = array_merge($duplikat, $this->program_bantuan_model->peserta_duplikat($program));
         }
 
         $data['ref_sasaran'] = $this->referensi_model->list_ref(SASARAN);
@@ -646,68 +676,15 @@ class Program_bantuan extends Admin_Controller
         $this->render('program_bantuan/hasil_pembersihan', $data);
     }
 
-    private function bersihkan_duplikat($program)
+    public function bersihkan_data_peserta()
     {
-        $duplikat = $this->db
-            ->select('pp.peserta, COUNT(peserta) as jumlah, MAX(pp.id) as id, MAX(p.nama) as nama, MAX(p.sasaran) as sasaran, MAX(pp.kartu_nama) as kartu_nama')
-            ->from('program_peserta pp')
-            ->join('program p', 'pp.program_id = p.id')
-            ->where('pp.program_id', $program['id'])
-            ->group_by('pp.peserta')
-            ->having('COUNT(peserta) > 1')
-            ->get()->result_array();
-        if (empty($duplikat)) {
-            return [];
-        }
-
-        $hasil = $this->db
-            ->where_in('peserta', array_column($duplikat, 'peserta'))
-            ->where_not_in('id', array_column($duplikat, 'id'))
+        $this->db
+            ->where_in('id', $this->input->post('id_cb'))
             ->delete('program_peserta');
-        status_sukses($hasil, $gagal_saja = true);
 
-        return $duplikat;
-    }
+        $this->session->success = 1;
 
-    private function bersihkan_peserta($sasaran)
-    {
-        switch ($sasaran) {
-            case '1':
-                $this->db->join('tweb_penduduk s', 's.nik = pp.peserta', 'left');
-                break;
-
-            case '2':
-                $this->db->join('tweb_keluarga s', 's.no_kk = pp.peserta', 'left');
-                break;
-
-            case '3':
-                $this->db->join('tweb_rtm s', 's.no_kk = pp.peserta', 'left');
-                break;
-
-            case '4':
-                $this->db->join('kelompok s', 's.kode = pp.peserta', 'left');
-                break;
-
-            default:
-                break;
-        }
-        $invalid = $this->db->select('pp.id, p.nama, p.sasaran, pp.peserta, pp.kartu_nama')
-            ->from('program_peserta pp')
-            ->join('program p', 'p.id = pp.program_id')
-            ->where('p.sasaran', $sasaran)
-            ->where('s.id is NULL')
-            ->order_by('p.sasaran', 'pp.peserta')
-            ->get()->result_array();
-        if (empty($id_invalid = array_column($invalid, 'id'))) {
-            return [];
-        }
-
-        $hasil = $this->db
-            ->where_in('id', $id_invalid)
-            ->delete('program_peserta');
-        status_sukses($hasil, $gagal_saja = true);
-
-        return $invalid;
+        redirect('program_bantuan/bersihkan_data');
     }
 
     protected function cek_is_date($cells)

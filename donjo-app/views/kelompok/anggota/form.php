@@ -1,5 +1,4 @@
-<?php if ($this->CI->cek_hak_akses('u')): ?>
-<?php $this->load->view('global/validasi_form'); ?>
+<?php if ($this->CI->cek_hak_akses('u')) : ?>
 	<?= $tipe = ucfirst($this->controller); ?>
 	<div class="content-wrapper">
 		<section class="content-header">
@@ -10,7 +9,7 @@
 				<li class="active">Data Anggota <?= $tipe; ?></li>
 			</ol>
 		</section>
-		<section class="content">
+		<section class="content" id="maincontent">
 			<form id="validasi" action="<?= $form_action ?>" method="POST" enctype="multipart/form-data" class="form-horizontal">
 				<div class="row">
 					<div class="col-md-3">
@@ -25,7 +24,7 @@
 								<div class="form-group">
 									<label class="col-sm-3 control-label" for="id_penduduk">Nama Anggota</label>
 									<div class="col-sm-5">
-										<select class="form-control input-sm select2 required" <?= jecho($pend, true, 'disabled') ?> id="id_penduduk" name="id_penduduk">
+										<select class="form-control input-sm select2-non-auto required" <?= jecho($pend, true, 'disabled') ?> id="id_penduduk" name="id_penduduk">
 											<option value="">-- Silakan Masukan NIK / Nama --</option>
 											<?php foreach ($list_penduduk as $data) : ?>
 												<option value="<?= $data['id']; ?>" <?= selected($data['id'], $pend['id_penduduk']); ?>>NIK :<?= $data['nik'] . ' - ' . $data['nama'] . ' - ' . $data['alamat']; ?></option>

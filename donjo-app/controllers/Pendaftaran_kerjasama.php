@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -37,6 +37,7 @@
 
 defined('BASEPATH') || exit('No direct script access allowed');
 
+use App\Models\Pamong;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Psr7;
@@ -63,42 +64,19 @@ class Pendaftaran_kerjasama extends Admin_Controller
 
     public function index()
     {
-        try {
-            $response = $this->client->get("{$this->server}/api/v1/pelanggan/terdaftar", [
-                'headers' => [
-                    'X-Requested-With' => 'XMLHttpRequest',
-                    'Authorization'    => "Bearer {$this->setting->layanan_opendesa_token}",
-                ],
-                'query' => [
-                    'desa_id' => kode_wilayah($this->header['desa']['kode_desa']),
-                ],
-            ])
-                ->getBody();
-        } catch (ClientException $e) {
-            // log_message('error', $e);
-            $this->session->set_userdata(['response' => json_decode($e->getResponse()->getBody())]);
+        return view('admin.pendaftaran_kerjasama.pendaftaran', []);
+    }
 
-            redirect('pendaftaran_kerjasama/form');
-        }
-
-        $this->render('pendaftaran_kerjasama/index', ['response' => json_decode($response)]);
+    public function terdaftar()
+    {
+        $data = json_decode(json_encode($this->request));
+        $this->load->view('pendaftaran_kerjasama/terdaftar', $data, false);
     }
 
     public function form()
     {
-        try {
-            $response = $this->client->get("{$this->server}/api/v1/pelanggan/form-register", [
-                'headers' => [
-                    'X-Requested-With' => 'XMLHttpRequest',
-                    'Authorization'    => "Bearer {$this->setting->layanan_opendesa_token}",
-                ],
-            ])
-                ->getBody();
-        } catch (ClientException $cx) {
-            log_message('error', $cx);
-        }
-
-        $this->render('pendaftaran_kerjasama/form', ['response' => json_decode($response)]);
+        $data = json_decode(json_encode($this->request));
+        $this->load->view('pendaftaran_kerjasama/form', $data, false);
     }
 
     public function register()
@@ -114,7 +92,7 @@ class Pendaftaran_kerjasama extends Admin_Controller
         try {
             $this->upload->do_upload('permohonan');
             $response = $this->client->post("{$this->server}/api/v1/pelanggan/register", [
-                'headers' => ['X-Requested-With' => 'XMLHttpRequest'],
+                'headers'   => ['X-Requested-With' => 'XMLHttpRequest'],
                 'multipart' => [
                     ['name' => 'user_id', 'contents' => (int) $this->input->post('user_id')],
                     ['name' => 'email', 'contents' => email($this->input->post('email'))],
@@ -124,20 +102,38 @@ class Pendaftaran_kerjasama extends Admin_Controller
                     ['name' => 'kontak_nama', 'contents' => nama($this->input->post('kontak_nama'))],
                     ['name' => 'status_langganan', 'contents' => (int) $this->input->post('status_langganan_id')],
                     ['name' => 'permohonan', 'contents' => Psr7\Utils::tryFopen(LOKASI_DOKUMEN . 'dokumen-permohonan.pdf', 'r')],
-                ]
+                ],
             ])
                 ->getBody();
         } catch (ClientException $cx) {
             log_message('error', $cx);
-            $this->session->set_flashdata(['errors' => json_decode($cx->getResponse()->getBody())]);
+            $error = json_decode($cx->getResponse()->getBody());
+            $this->session->set_flashdata(['errors' => $error]);
             session_error();
 
             return redirect('pendaftaran_kerjasama/form');
         } catch (Exception $e) {
-            log_message('error', $e);
-            session_error();
+            try {
+                $response = $this->client->post("{$this->server}/api/v1/pelanggan/register", [
+                    'headers'   => ['X-Requested-With' => 'XMLHttpRequest'],
+                    'multipart' => [
+                        ['name' => 'user_id', 'contents' => (int) $this->input->post('user_id')],
+                        ['name' => 'email', 'contents' => email($this->input->post('email'))],
+                        ['name' => 'desa', 'contents' => bilangan_titik($this->input->post('desa'))],
+                        ['name' => 'domain', 'contents' => alamat_web($this->input->post('domain'))],
+                        ['name' => 'kontak_no_hp', 'contents' => bilangan($this->input->post('kontak_no_hp'))],
+                        ['name' => 'kontak_nama', 'contents' => nama($this->input->post('kontak_nama'))],
+                        ['name' => 'status_langganan', 'contents' => (int) $this->input->post('status_langganan_id')],
+                        ['name' => 'permohonan', 'contents' => 0],
+                    ],
+                ])
+                    ->getBody();
+            } catch (Exception $e) {
+                log_message('error', $e);
+                session_error();
 
-            return redirect('pendaftaran_kerjasama/form');
+                return redirect('pendaftaran_kerjasama/form');
+            }
         }
 
         $this->setting_model->update_setting([
@@ -164,8 +160,10 @@ class Pendaftaran_kerjasama extends Admin_Controller
         $data['nama_bulan']   = ucwords(getBulan($date->format('m')));
         $data['tahun']        = $date->format('Y');
         $data['nama_tahun']   = ucwords(to_word($date->format('Y')));
-        $data['kepala_desa']  = strtoupper($this->pamong_model->get_ttd()['pamong_nama']);
+        $data['kepala_desa']  = strtoupper(Pamong::kepalaDesa()->first()->pamong_nama);
         $data['alamat']       = $desa['alamat_kantor'];
+        $data['stempel']      = to_base64(STEMPEL);
+        $data['layanan_logo'] = to_base64(LAYANAN_LOGO);
 
         $this->load->view('pendaftaran_kerjasama/template', $data);
     }

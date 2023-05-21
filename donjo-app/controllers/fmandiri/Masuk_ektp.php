@@ -11,7 +11,7 @@
  * Aplikasi dan source code ini dirilis berdasarkan lisensi GPL V3
  *
  * Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  *
  * Dengan ini diberikan izin, secara gratis, kepada siapa pun yang mendapatkan salinan
  * dari perangkat lunak ini dan file dokumentasi terkait ("Aplikasi Ini"), untuk diperlakukan
@@ -29,7 +29,7 @@
  * @package   OpenSID
  * @author    Tim Pengembang OpenDesa
  * @copyright Hak Cipta 2009 - 2015 Combine Resource Institution (http://lumbungkomunitas.net/)
- * @copyright Hak Cipta 2016 - 2021 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
+ * @copyright Hak Cipta 2016 - 2023 Perkumpulan Desa Digital Terbuka (https://opendesa.id)
  * @license   http://www.gnu.org/licenses/gpl.html GPL V3
  * @link      https://github.com/OpenSID/OpenSID
  *
@@ -39,29 +39,24 @@ defined('BASEPATH') || exit('No direct script access allowed');
 
 class Masuk_ektp extends Web_Controller
 {
-    private $cek_anjungan;
-
     public function __construct()
     {
         parent::__construct();
         mandiri_timeout();
         $this->session->login_ektp = true;
-        $this->load->model(['anjungan_model', 'mandiri_model', 'theme_model']);
-        if ($this->setting->layanan_mandiri == 0 && ! $this->cek_anjungan) {
+        $this->load->model(['mandiri_model', 'theme_model']);
+        if ($this->setting->layanan_mandiri == 0) {
             show_404();
         }
     }
 
     public function index()
     {
-        if ($this->session->mandiri == 1) {
-            redirect('layanan-mandiri');
-        }
         $mac_address = $this->input->get('mac_address', true);
         $token       = $this->input->get('token_layanan', true);
-        if ($mac_address && $token == $this->setting->layanan_opendesa_token) {
+        if (($mac_address && $token == $this->setting->layanan_opendesa_token) || $this->session->mandiri == 1) {
             $this->session->mac_address = $mac_address;
-            redirect('layanan-mandiri');
+            redirect('layanan-mandiri/beranda');
         }
 
         //Initialize Session ------------
@@ -75,11 +70,17 @@ class Masuk_ektp extends Web_Controller
         }
 
         $data = [
-            'header'              => $this->config_model->get_data(),
+            'header'              => $this->header,
             'latar_login_mandiri' => $this->theme_model->latar_login_mandiri(),
-            'cek_anjungan'        => $this->anjungan_model->cek_anjungan($this->session->mac_address),
+            'cek_anjungan'        => $this->cek_anjungan,
             'form_action'         => site_url('layanan-mandiri/cek-ektp'),
         ];
+
+        if ($this->setting->tampilan_anjungan == 1) {
+            $this->load->model('first_gallery_m');
+
+            $data['daftar_album'] = $this->first_gallery_m->sub_gallery_show($this->setting->tampilan_anjungan_slider);
+        }
 
         $this->load->view(MANDIRI . '/masuk', $data);
     }
@@ -87,6 +88,6 @@ class Masuk_ektp extends Web_Controller
     public function cek_ektp()
     {
         $this->mandiri_model->siteman_ektp();
-        redirect('layanan-mandiri');
+        redirect('layanan-mandiri/beranda');
     }
 }

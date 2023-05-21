@@ -53,8 +53,8 @@ defined('BASEPATH') || exit('No direct script access allowed');
 			<div class="col-md-6 col-sm-6 col-xs-12">
 				<form action="<?= $form_action; ?>" method="POST" id="validasi">
 					<div class="box-body">
-						<?php $gagal = $data = $this->session->flashdata('notif'); ?>
-						<?php if ($data['status'] == -1): ?>
+						<?php $gagal = $data = session('notif'); ?>
+						<?php if ($data['status'] == -1) : ?>
 							<div class="callout callout-danger">
 								<?= $gagal['pesan']; ?>
 							</div>
@@ -63,23 +63,45 @@ defined('BASEPATH') || exit('No direct script access allowed');
 						<div class="form-group">
 							<label for="pin_lama">PIN Lama</label>
 							<div class="input-group">
-								<input type="password" class="form-control input-md bilangan pin required <?= jecho($cek_anjungan['keyboard'] == 1, true, 'kbvnumber'); ?>" name="pin_lama" placeholder="Masukkan PIN Lama" minlength="6" maxlength="6">
+								<input type="password" class="form-control input-md bilangan pin required <?= jecho($cek_anjungan['keyboard'] == 1, true, 'kbvnumber'); ?>" name="pin_lama" placeholder="Masukkan PIN Lama" minlength="6" maxlength="6" autocomplete="off">
 								<span class="input-group-addon"><i class="fa fa-eye-slash" id="lama" onclick="show(this);" aria-hidden="true"></i></span>
 							</div>
 						</div>
 						<div class="form-group">
 							<label for="pin_baru1">PIN Baru</label>
 							<div class="input-group">
-								<input type="password" class="form-control input-md bilangan pin required <?= jecho($cek_anjungan['keyboard'] == 1, true, 'kbvnumber'); ?>" name="pin_baru1" id="pin_baru1" placeholder="Masukkan PIN Baru" minlength="6" maxlength="6">
+								<input type="password" class="form-control input-md bilangan pin required <?= jecho($cek_anjungan['keyboard'] == 1, true, 'kbvnumber'); ?>" name="pin_baru1" id="pin_baru1" placeholder="Masukkan PIN Baru" minlength="6" maxlength="6" autocomplete="off">
 								<span class="input-group-addon"><i class="fa fa-eye-slash" id="baru1" onclick="show(this);" aria-hidden="true"></i></span>
 							</div>
 						</div>
 						<div class="form-group">
 							<label for="pin_baru2">Konfirmasi PIN Baru</label>
 							<div class="input-group">
-								<input type="password" class="form-control input-md bilangan pin required <?= jecho($cek_anjungan['keyboard'] == 1, true, 'kbvnumber'); ?>" name="pin_baru2" id="pin_baru2" placeholder="Masukkan Konfirmasi PIN Baru" minlength="6" maxlength="6">
+								<input type="password" class="form-control input-md bilangan pin required <?= jecho($cek_anjungan['keyboard'] == 1, true, 'kbvnumber'); ?>" name="pin_baru2" id="pin_baru2" placeholder="Masukkan Konfirmasi PIN Baru" minlength="6" maxlength="6" autocomplete="off">
 								<span class="input-group-addon"><i class="fa fa-eye-slash" id="baru2" onclick="show(this);" aria-hidden="true"></i></span>
 							</div>
+						</div>
+
+						<div class="form-group">
+							<?php if ($tgl_verifikasi_telegram || $tgl_verifikasi_email) : ?>
+								<label style="margin-top: 10px; margin-bottom: 0px;">Kirim PIN Baru Melalui : </label>
+							<?php endif; ?>
+
+							<?php if ($tgl_verifikasi_email) : ?>
+								<div class="radio">
+									<label style="font-size: 13.7px;">
+										<input type="radio" value="kirim_email" id="kirim_email" name="pilihan_kirim" checked>Email
+									</label>
+								</div>
+							<?php endif; ?>
+
+							<?php if ($tgl_verifikasi_telegram) : ?>
+								<div class="radio">
+									<label style="font-size: 13.7px;">
+										<input type="radio" value="kirim_telegram" id="kirim_telegram" name="pilihan_kirim" checked>Telegram
+									</label>
+								</div>
+							<?php endif; ?>
 						</div>
 					</div>
 					<div class="box-footer">
@@ -93,18 +115,12 @@ defined('BASEPATH') || exit('No direct script access allowed');
 	</div>
 </div>
 <script type="text/javascript">
-	$(document).ready(function(){
+	$(document).ready(function() {
 		setTimeout(function() {
 			$('#pin_baru2').rules('add', {
 				equalTo: '#pin_baru1'
 			});
 		}, 500);
-
-		window.setTimeout(function() {
-			$(".callout").fadeTo(500, 0).slideUp(500, function(){
-				$(this).remove();
-			});
-		}, 5000);
 	});
 
 	function show(elem) {
