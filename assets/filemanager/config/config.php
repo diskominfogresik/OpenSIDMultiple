@@ -64,7 +64,7 @@ if ($_SESSION['fm_key']) {
 	*/
 
 	$folder_app = strtolower(substr($_SERVER['REQUEST_URI'], 0, strrpos($_SERVER['REQUEST_URI'],'/assets')));
-
+	$namaDesa = basename($_SERVER['DOCUMENT_ROOT']);
 	$config = array(
 
 			/*
@@ -95,8 +95,8 @@ if ($_SESSION['fm_key']) {
 			| with final /
 			|
 			*/
-			'current_path' => '../../desa/upload/media/',
-
+			//'current_path' => '../../desa/upload/media/',
+			'current_path' =>  '../../sites-desa/$namaDesa/desa/upload/media/'
 			/*
 			|--------------------------------------------------------------------------
 			| relative path from filemanager folder to thumbs folder
@@ -106,8 +106,8 @@ if ($_SESSION['fm_key']) {
 			| DO NOT put inside upload folder
 			|
 			*/
-			'thumbs_base_path' => '../../desa/upload/thumbs/',
-
+			//'thumbs_base_path' => '../../desa/upload/thumbs/',
+			'thumbs_base_path' =>  '../../sites-desa/$namaDesa/desa/upload/thumbs/'			
 			/*
 			|--------------------------------------------------------------------------
 			| path from base_url to base of thumbs folder

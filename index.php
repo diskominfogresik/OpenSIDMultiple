@@ -53,6 +53,7 @@
  * NOTE: If you change these, also change the error_reporting() code below
  */
 define('ENVIRONMENT', $_SERVER['CI_ENV'] ?? 'production');
+//define('ENVIRONMENT', $_SERVER['CI_ENV'] ?? 'development');
 
 /*
  *---------------------------------------------------------------
@@ -214,7 +215,10 @@ define('SELF', pathinfo(__FILE__, PATHINFO_BASENAME));
 define('BASEPATH', $system_path);
 
 // Path to the front controller (this file) directory
-define('FCPATH', __DIR__ . DIRECTORY_SEPARATOR);
+//define('FCPATH', __DIR__ . DIRECTORY_SEPARATOR);
+$namaDesa=end(explode(DIRECTORY_SEPARATOR,$_SERVER['DOCUMENT_ROOT']));
+define('FCPATH', dirname(__FILE__). '/sites-desa/'. $namaDesa.DIRECTORY_SEPARATOR);
+
 
 // Name of the "system" directory
 define('SYSDIR', basename(BASEPATH));
@@ -273,6 +277,7 @@ if (! isset($view_folder[0]) && is_dir(APPPATH . 'views' . DIRECTORY_SEPARATOR))
 
 define('VIEWPATH', $view_folder . DIRECTORY_SEPARATOR);
 
+//define('APP_URL', 'https' . "://{$_SERVER['HTTP_HOST']}".str_replace(basename($_SERVER['SCRIPT_NAME']),"",$_SERVER['SCRIPT_NAME']));
 /*
  * --------------------------------------------------------------------
  * LOAD THE BOOTSTRAP FILE
